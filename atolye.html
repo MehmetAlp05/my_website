@@ -1,0 +1,2575 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Roma Mutfağı Atölyesi</title>
+
+<script>
+// =====================================================================
+// ===== VERI: TÜM METİNLER, MALZEMELER VE TARİFLER =====
+// Yazıları, malzemeleri ve tarif adımlarını değiştirmek için yalnızca bu bölüm yeterli.
+//   • Her yazı tek tırnak '…' içinde durur. Tırnakları ve satır sonlarındaki virgülleri silme.
+//   • <i>…</i> arasındaki kelime italik görünür (Latince adlar için).
+//   • Bilgilerin kaynağı: Roma_Mutfagi_Okuma_Kitapcigi.pdf
+// =====================================================================
+const VERI = {
+
+  // ----- Genel -----
+  sayfaBasligi: 'Roma Mutfağı Atölyesi',
+  notSatiri: 'Eğitim amaçlı canlandırmadır; süreler ve sıcaklıklar temsilîdir.',
+  kisayolNotu: 'Kısayollar: R baştan, Esc tarif listesi, F tam ekran',
+
+  // ----- Tarif seçme ekranı -----
+  secim: {
+    baslik: 'Bugün ne pişirelim?',
+    not: 'Bir tarif seç; Roma mutfağında adım adım birlikte hazırlayalım.',
+    yakinda: 'Yakında',
+  },
+
+  // ----- Mutfak ekranı -----
+  mutfak: {
+    listeyeDon: 'Tarif listesi (Esc)',
+    adim: 'Adım',
+    tikla: 'Tıkla:',
+    birini: 'Tıkla (birini seç):',
+    kaynakBaslik: 'Kaynakta',
+    bugunBaslik: 'Bugün yapmak istersen',
+    pisiyor: 'Yavaşça pişiyor…',
+    kaynaniyor: 'Kaynıyor…',
+    kizariyor: 'Kızarıyor…',
+    suzuluyor: 'Süzülüyor…',
+    gece: 'Bir gece bekleniyor…',
+    geceSuresi: 3,                   // “bir gece beklet” adımı ekranda kaç saniye sürer (temsilî)
+    pismeSuresi: 3,                  // “pişir” adımı ekranda kaç saniye sürer (temsilî)
+    kaynatmaSuresi: 2,               // kaynatma kaç saniye sürer (temsilî)
+    kizartmaSuresi: 2.5,             // kızartma kaç saniye sürer (temsilî)
+    bittiBaslik: 'Tamamlandı',
+    bittiYazi: 'Yemek hazır. Afiyet olsun!',
+    bastan: 'Baştan yap (R)',
+    baskaTarif: 'Başka tarif seç (Esc)',
+  },
+
+  // Mutfaktaki tıklanabilir yerlerin adları (panelde “Tıkla: …” satırında görünür)
+  araclar: {
+    havan: '<i>Mortarium</i> (havan)',
+    tahta: 'Tahta',
+    testum: '<i>Testum</i> (kil kapak)',
+    koz: 'Köz',
+    izgara: 'Izgara',
+    kenar: 'Ocağın kenarı',
+    urun: 'Yemek',
+    discus: '<i>Discus</i> (servis tepsisi)',
+    olla: '<i>Olla</i> (tencere)',
+    sartago: '<i>Sartago</i> (kızartma tavası)',
+    patina: '<i>Patina</i> (sığ tava)',
+    bakirKap: 'Bakır kap',
+    culter: '<i>Culter</i> (bıçak)',
+    cubuklar: 'İki çubuk',
+    colum: '<i>Colum</i> (süzgeç)',
+  },
+
+  // Malzemeler. "kimlik" (soldaki ad) çizimle bağlantılıdır, onu değiştirme.
+  //   renk: havanda bıraktığı beneklerin rengi · benek: kaç benek bırakır
+  malzemeler: {
+    peynir:     { ad: 'Taze peynir',        renk: '#F6F1E4', benek: 14 },
+    un:         { ad: 'Buğday unu',         renk: '#EFE6D2', benek: 14 },
+    yumurta:    { ad: 'Yumurta',            renk: '#E8B53C', benek: 8 },
+    defne:      { ad: 'Defne yaprağı',      renk: '#5E7A45' },
+    sarimsak:   { ad: '4 baş sarımsak',     renk: '#F4F0E6', benek: 16 },
+    tuz:        { ad: 'Tuz',                renk: '#D8D4CC', benek: 8 },
+    sertPeynir: { ad: 'Sert, tuzlu peynir', renk: '#EEDDAA', benek: 12 },
+    maydanoz:   { ad: 'Maydanoz',           renk: '#3F7A2E', benek: 10 },
+    sedefotu:   { ad: 'Sedef otu',          renk: '#8A9A78', benek: 8 },
+    kisnis:     { ad: 'Kişniş',             renk: '#5E9A3A', benek: 10 },
+    zeytinyagi: { ad: 'Zeytinyağı',         renk: '#E2B43C', benek: 8 },
+    sirke:      { ad: 'Sirke',              renk: '#4A2622', benek: 6 },
+    armut:      { ad: 'Armut',              renk: '#D9CC7A', benek: 12 },
+    karabiber:  { ad: 'Karabiber',          renk: '#2A1E17', benek: 10 },
+    kimyon:     { ad: 'Kimyon',             renk: '#8A6A3A', benek: 8 },
+    bal:        { ad: 'Bal',                renk: '#E2A72C', benek: 8 },
+    passum:     { ad: 'Kuru üzüm şarabı', renk: '#6B2E4A', benek: 6 },
+    liquamen:   { ad: 'Balık sosu (<i>liquamen</i>)',     renk: '#9A6A3A', benek: 6 },
+    hurma:      { ad: 'Hurma',              renk: '#6B3A22' },
+    ceviz:      { ad: 'Ceviz',              renk: '#A87A4A' },
+    camfistigi: { ad: 'Çam fıstığı',        renk: '#EAD7A6' },
+    kavilca:    { ad: 'Kavılca unu',        renk: '#E3D3B0', benek: 14 },
+    domuzYagi:  { ad: 'Domuz yağı',         renk: '#F1EAD8' },
+    hashas:     { ad: 'Haşhaş',             renk: '#2A1E17' },
+    et:         { ad: 'Et',                 renk: '#B5524A', benek: 14 },
+    ekmek:      { ad: 'Beyaz ekmek',        renk: '#E9D6A8', benek: 10 },
+    sarap:      { ad: 'Şarap',              renk: '#6B1E2A', benek: 6 },
+    mersin:     { ad: 'Mersin tanesi',      renk: '#3A2E5A', benek: 6 },
+    gomlek:     { ad: 'Gömlek (<i>omentum</i>)', renk: '#F4ECDF' },
+    caroenum:   { ad: '<i>Caroenum</i>',    renk: '#5A1F2A' },
+    damlaSakizi:    { ad: 'Damla sakızı',                renk: '#EFE3B0' },
+    sumbul:         { ad: 'Sümbül kökü / defne',         renk: '#8B5E3C' },
+    safran:         { ad: 'Safran',                      renk: '#D9622B' },
+    hurmaCekirdegi: { ad: 'Hurma çekirdeği',             renk: '#4A2A1A' },
+    komur:          { ad: 'Odun kömürü',                 renk: '#2A1E17' },
+  },
+
+  // ----- Tarifler (sunumdaki sırayla) -----
+  // Her adımda:
+  //   yazi:   panelde büyük harflerle görünen talimat
+  //   tikla:  tıklanacak şey: bir malzeme ya da mutfaktaki bir yer (araclar listesindeki adlar).
+  //           Birden çok şey [ '...', '...' ] olarak yazılabilir; hepsine tıklanınca adım biter.
+  //           herhangi: true yazılırsa listedekilerden birine tıklamak yeter.
+  //   eylem:  tıklayınca ne olur:
+  //     ekle        malzemeyi bir yere koyar. kap: 'havan', 'tahta', 'urun' ya da bir kap (olla, sartago…);
+  //                 tart: kantarda gösterilecek miktar; kaynat: true ise sonra kaynar
+  //     soy, dov (karisim: 0…1), sekillendir, tasi (yer), kapak, kor, servis
+  //     kapKoy      bir kabı (kap) bir yere (yer: 'koz' ya da 'izgara') koyar
+  //     pisir       pişirir; kap ve yer verilirse önce kabı oraya koyar; renk, durum, icerikRengi değişebilir
+  //     kizart      yemeği kaba (kap) alıp kızartır · cevir: iki çubukla çevirir
+  //     kes         bıçakla çekirdek ya da öz çıkarır · doldur · serp (hedef) · sur · dok (havandakini patinaya döker)
+  //   kaynak: kitapçıktaki ilgili cümle (isteğe bağlı) · not: kısa açıklama (isteğe bağlı)
+  // hazir: false olan tarifler seçim ekranında “Yakında” olarak görünür.
+  tarifler: [
+    {
+      kimlik: 'moretum',
+      hazir: true,
+      ad: '<i>Moretum</i>',
+      altBaslik: 'Bir çiftçinin sarımsaklı peynir ezmesi',
+      kaynak: '<i>Moretum</i> şiiri',
+      ikon: 'tarifMoretum',
+      raf: ['sarimsak', 'tuz', 'sertPeynir', 'maydanoz', 'sedefotu', 'kisnis', 'zeytinyagi', 'sirke'],
+      macunRengi: '#CBC796',      // her şey karışınca ezmenin rengi
+      urun: 'top',                // ezme sonunda top olur
+      bugun: 'Pecorino ya da eski kaşar gibi sert, tuzlu bir peynir kullanabilirsin. Sedef otu çok acıdır ve cildi tahriş edebilir; çoğu modern aşçı onu çıkarır ya da yerine bir tutam adaçayı kullanır. Pide ya da lavaşla iyi gider.',
+      adimlar: [
+        { yazi: 'Dört baş sarımsağı soy.', tikla: 'sarimsak', eylem: 'soy',
+          kaynak: 'Simylus bahçesinden dört baş sarımsak, maydanoz, sedef otu ve kişniş toplar. Sarımsağı soyar…',
+          not: 'Şiirin kahramanı Simylus adlı yoksul bir çiftçidir: şafaktan önce kalkar, ateşi yakar, ekmeğini hazırlar ve kahvaltılık bir ezme yapar.' },
+        { yazi: 'Soyulmuş sarımsağı taş havana koy.', tikla: 'tahta', eylem: 'ekle', kap: 'havan',
+          kaynak: '…taş havanında tuz ve sert, tuzlu bir peynirle birlikte döver…' },
+        { yazi: 'Tuzu ekle.', tikla: 'tuz', eylem: 'ekle', kap: 'havan' },
+        { yazi: 'Sert, tuzlu peyniri ekle.', tikla: 'sertPeynir', eylem: 'ekle', kap: 'havan' },
+        { yazi: 'Sarımsağı tuz ve peynirle birlikte döv.', tikla: 'havan', eylem: 'dov', karisim: 0.4,
+          not: '<i>Mortarium</i>’un iç yüzeyindeki sert kum ve taş taneleri ezmeyi kolaylaştırır.' },
+        { yazi: 'Otları ekle: maydanoz, sedef otu ve kişniş.', tikla: ['maydanoz', 'sedefotu', 'kisnis'], eylem: 'ekle', kap: 'havan',
+          kaynak: '…otları ekler.' },
+        { yazi: 'Otlarla birlikte döv.', tikla: 'havan', eylem: 'dov', karisim: 0.6 },
+        { yazi: 'Biraz zeytinyağı ve sirke dök.', tikla: ['zeytinyagi', 'sirke'], eylem: 'ekle', kap: 'havan',
+          kaynak: 'Sonra biraz zeytinyağı ve sirke dökerek karıştırmaya devam eder.' },
+        { yazi: 'Tek bir renk çıkana kadar karıştır.', tikla: 'havan', eylem: 'dov', karisim: 1,
+          kaynak: '“pek çok renkten tek bir renk”',
+          not: 'Bu “çoktan bir” fikri Latince <i>e pluribus unus</i> ifadesiyle ilişkilendirilir; ifade sonradan Amerika Birleşik Devletleri’nin resmi sloganı olmuştur.' },
+        { yazi: 'Ezmeyi bir top haline getir.', tikla: 'havan', eylem: 'sekillendir',
+          kaynak: 'Ezmeyi bir top haline getirir ve ekmeğiyle birlikte tarlaya gider.' },
+        { yazi: 'Topu servis tepsisine al.', tikla: 'urun', eylem: 'servis' },
+      ],
+      sonuc: {
+        baslik: '<i>Moretum</i> hazır',
+        yazi: 'Şiirde bu ezme yoksul çiftçi Simylus’un kahvaltısıdır: sade bir çiftlik yemeği.',
+        alinti: '“pek çok renkten tek bir renk”',
+        alintiKaynak: '<i>Moretum</i> şiiri (<i>Appendix Vergiliana</i>)',
+      },
+    },
+    {
+      kimlik: 'patina',
+      hazir: true,
+      ad: '<i>Patina de piris</i>',
+      altBaslik: 'Hem tatlı hem tuzlu: armutlu patina',
+      kaynak: 'Apicius IV',
+      ikon: 'tarifPatina',
+      raf: ['armut', 'karabiber', 'kimyon', 'bal', 'passum', 'liquamen', 'zeytinyagi', 'yumurta'],
+      urun: 'armut',              // tahtada ve tencerede armutlar görünür
+      macunRengi: '#C9A15A',      // havandaki karışımın sonundaki rengi
+      servisKabi: 'patina',       // sonunda sığ tava servis tepsisine gider
+      ollaSuyu: true,             // tencerede baştan su var (armutlar haşlanacak)
+      bugun: '<i>Passum</i> yerine tatlı bir likör şarabı, balık sosu yerine colatura ya da Asya balık sosu kullanılabilir; ama çok azar azar. Modern versiyonlar kısık fırında yumurta katılaşana kadar pişirilir.',
+      adimlar: [
+        { yazi: 'Tencereyi (<i>olla</i>) közün üstüne koy.', tikla: 'olla', eylem: 'kapKoy', kap: 'olla', yer: 'koz',
+          not: '<i>Olla</i> en eski ve en yaygın Roma tenceresiydi; lapa, bakla, et ve tavuk haşlamak için kullanılırdı. Közlerin doğrudan üstü harlı ateştir: kaynatmak için.' },
+        { yazi: 'Armutları tencereye koy.', tikla: 'armut', eylem: 'ekle', kap: 'olla' },
+        { yazi: 'Armutları haşla.', tikla: 'olla', eylem: 'pisir', kap: 'olla', durum: 'haslanmis', bekleme: 'Haşlanıyor…',
+          kaynak: 'Armutlar haşlanır…' },
+        { yazi: 'Armutları tahtaya al.', tikla: 'urun', eylem: 'tasi', yer: 'tahta' },
+        { yazi: 'Bıçakla ortalarını temizle; sap ve çekirdeklerini çıkar.', tikla: 'culter', eylem: 'kes', durum: 'ozsuz',
+          kaynak: '…ortaları temizlenip sap ve çekirdekleri çıkarılır…',
+          not: 'Bıçak (<i>culter</i>) aşçının adeta simgesiydi: Plautus’un komedilerinde aşçı hep elinde bıçakla sahneye çıkar.' },
+        { yazi: 'Armutları havana koy.', tikla: 'urun', eylem: 'tasi', yer: 'havan' },
+        { yazi: 'Baharatları ve sosları ekle.', tikla: ['karabiber', 'kimyon', 'bal', 'passum', 'liquamen', 'zeytinyagi'], eylem: 'ekle', kap: 'havan',
+          kaynak: '…karabiber, kimyon, bal, kuru üzüm şarabı (<i>passum</i>), “sos” ve biraz zeytinyağıyla…',
+          not: 'Vehling, Latince <i>liquamen</i> kelimesini “broth” (et suyu) diye çevirmiştir; ama bugün araştırmacıların çoğu bunun balık sosu olduğunu kabul eder.' },
+        { yazi: 'Hepsini havanda ez.', tikla: 'havan', eylem: 'dov', karisim: 0.6,
+          kaynak: '…ezilir…' },
+        { yazi: 'Yumurtayı ekle.', tikla: 'yumurta', eylem: 'ekle', kap: 'havan' },
+        { yazi: 'Yumurtayla iyice karıştır.', tikla: 'havan', eylem: 'dov', karisim: 1,
+          kaynak: '…yumurtayla karıştırılıp bir turta yapılır…' },
+        { yazi: 'Karışımı sığ tavaya (<i>patina</i>) dök.', tikla: 'patina', eylem: 'dok',
+          not: '<i>Patina</i> burada hem sığ tavayı hem de içinde pişen yemeği ifade eder: yumurtayla bağlanmış, flan ya da fırında muhallebi benzeri bir yemek.' },
+        { yazi: 'Tavayı ızgaraya koy; kısık ateşte, yumurta katılaşana kadar pişir.', tikla: 'izgara', eylem: 'pisir', kap: 'patina', yer: 'izgara', icerikRengi: '#B98545',
+          not: 'Kitapçık Romalıların bu yemeği tam olarak nasıl pişirdiğini belirtmez. Izgara ya da sacayağın üstü kısık ateşte pişirmek içindir; modern versiyonlar kısık fırında yumurta katılaşana kadar pişirilir.' },
+        { yazi: 'Üstüne karabiber serp.', tikla: 'karabiber', eylem: 'serp', hedef: 'patina',
+          kaynak: '…üzerine karabiber serpilip servis edilir.' },
+        { yazi: 'Tavayı servis tepsisine al.', tikla: 'patina', eylem: 'servis',
+          not: '<i>Patina</i> doğrudan sofraya da konabilirdi.' },
+      ],
+      sonuc: {
+        baslik: '<i>Patina de piris</i> hazır',
+        yazi: 'Tarif meyve, bal ve balık sosunu aynı yemekte birleştirir. Romalılar tatlıyı tuzludan bizim kadar keskin ayırmazdı; birçok tatlı yemekte karabiber, birçok tuzlu yemekte bal bulunurdu.',
+        alinti: 'Armutlar haşlanır, ortaları temizlenip sap ve çekirdekleri çıkarılır; karabiber, kimyon, bal, kuru üzüm şarabı (<i>passum</i>), “sos” ve biraz zeytinyağıyla ezilir; yumurtayla karıştırılıp bir turta yapılır, üzerine karabiber serpilip servis edilir.',
+        alintiKaynak: 'Apicius IV (Vehling çevirisine göre, 161. tarif)',
+      },
+    },
+    {
+      kimlik: 'isicia',
+      hazir: true,
+      ad: '<i>Isicia omentata</i>',
+      altBaslik: '“Roma köftesi”',
+      kaynak: 'Apicius',
+      ikon: 'tarifIsicia',
+      raf: ['et', 'ekmek', 'sarap', 'karabiber', 'liquamen', 'mersin', 'camfistigi', 'gomlek', 'caroenum'],
+      urun: 'kofte',              // havandaki karışımdan köfteler yapılır
+      macunRengi: '#B9786A',
+      bugun: 'Herhangi bir kıyma kullanılabilir; mersin tanesi bulunamazsa ardıç tanesi, üzüm şurubu yerine pekmez.',
+      adimlar: [
+        { yazi: 'Eti tahtaya al.', tikla: 'et', eylem: 'ekle', kap: 'tahta',
+          not: '<i>Isicia</i>, kıyılmış etten yapılan köfte ve sucuk benzeri yemeklerin genel adıdır.' },
+        { yazi: 'Bıçakla eti ince doğra.', tikla: 'culter', eylem: 'kes', durum: 'kiyilmis', firlat: false,
+          kaynak: 'Et ince doğranır…' },
+        { yazi: 'Beyaz ekmeği şaraba batır ve havana koy.', tikla: ['ekmek', 'sarap'], eylem: 'ekle', kap: 'havan',
+          kaynak: '…şaraba batırılmış beyaz ekmekle…' },
+        { yazi: 'Doğranmış eti havana koy.', tikla: 'urun', eylem: 'tasi', yer: 'havan' },
+        { yazi: 'Eti ekmekle birlikte döv.', tikla: 'havan', eylem: 'dov', karisim: 0.5,
+          kaynak: '…birlikte dövülür…' },
+        { yazi: 'Karabiber, balık sosu ve mersin tanesi ekle.', tikla: ['karabiber', 'liquamen', 'mersin'], eylem: 'ekle', kap: 'havan',
+          kaynak: '…karabiber, balık sosu ve isteğe bağlı olarak mersin taneleriyle tatlandırılır.',
+          not: 'Kaynağa göre mersin taneleri isteğe bağlıdır.' },
+        { yazi: 'İyice karıştır.', tikla: 'havan', eylem: 'dov', karisim: 1 },
+        { yazi: 'Köfteleri şekillendir.', tikla: 'havan', eylem: 'sekillendir',
+          kaynak: 'Köfteler şekillendirilirken…' },
+        { yazi: 'İçlerine çam fıstığı ve karabiber koy.', tikla: ['camfistigi', 'karabiber'], eylem: 'doldur',
+          kaynak: '…içine çam fıstığı ve karabiber konur…' },
+        { yazi: 'Köfteleri gömleğe sar.', tikla: 'gomlek', eylem: 'sur', durum: 'sarili',
+          kaynak: '…gömleğe sarılıp…',
+          not: '<i>Omentata</i>, <i>omentum</i>, yani gömlek kelimesinden gelir: hayvanın midesini saran, dantel gibi ince yağ zarı. Türk mutfağında da “kuzu gömleği” adıyla, özellikle ciğer sarmada kullanılır. Gömlek köfteyi bir arada tutar ve pişerken eriyip eti yağlar.' },
+        { yazi: 'Köfteleri ızgarada pişir.', tikla: 'izgara', eylem: 'pisir', yer: 'izgara', renk: '#7A4A2C', durum: 'pismis',
+          kaynak: '…pişirilir…',
+          not: 'Kitapçık pişirme yerini belirtmez. Demir ızgara (<i>craticula</i>) küçük et parçaları ve sucuk pişirmek için kullanılırdı.' },
+        { yazi: 'Köfteleri servis tepsisine al.', tikla: 'urun', eylem: 'servis' },
+        { yazi: 'Üzerine <i>caroenum</i> dök.', tikla: 'caroenum', eylem: 'sur', durum: 'soslu',
+          kaynak: '…ve kaynatılarak koyulaştırılmış üzüm şırasıyla (<i>caroenum</i>) servis edilir.' },
+      ],
+      sonuc: {
+        baslik: '<i>Isicia omentata</i> hazır',
+        yazi: 'İngilizce kaynaklar bu yemeğe “Roman burger” der; Türkçede “köfte” daha anlaşılır. Apicius’un ikinci kitabı <i>Sarcoptes</i> (“kıyma”) tamamen bu tür yemeklere ayrılmıştır.',
+        alinti: 'Et ince doğranır ve şaraba batırılmış beyaz ekmekle birlikte dövülür; karabiber, balık sosu ve isteğe bağlı olarak mersin taneleriyle tatlandırılır. Köfteler şekillendirilirken içine çam fıstığı ve karabiber konur, gömleğe sarılıp pişirilir ve kaynatılarak koyulaştırılmış üzüm şırasıyla (<i>caroenum</i>) servis edilir.',
+        alintiKaynak: 'Apicius · Tasting History’nin yayımladığı çeviriden özet (kaynak numarası baskılara göre değişir)',
+      },
+    },
+    {
+      kimlik: 'libum',
+      hazir: true,
+      ad: '<i>Libum</i>',
+      altBaslik: 'Dört malzemeli peynirli ekmek',
+      kaynak: 'Cato, <i>De Agri Cultura</i> 75',
+      ikon: 'tarifLibum',
+      raf: ['peynir', 'un', 'yumurta', 'defne'],
+      macunRengi: '#EBDDB6',      // yoğrulmuş hamurun rengi
+      urun: 'somun',              // hamur sonunda somun olur
+      bugun: 'Taze peynir olarak lor ya da ricotta kullanılabilir. Servis ederken üzerine bal sürmek modern bir öneri olsa da çok yakışır.',
+      adimlar: [
+        { yazi: 'Peyniri kantarla tart ve havana koy.', tikla: 'peynir', eylem: 'ekle', kap: 'havan', tart: '2 libre ≈ 654 g',
+          kaynak: 'İki libre peynir havanda iyice ezilir…',
+          not: 'Roma tarifleri miktar verirdi; bu yüzden mutfakta kantar (<i>statera</i>) vardı. Bir libre yaklaşık 327 gramdır.' },
+        { yazi: 'Peyniri havanda iyice ez.', tikla: 'havan', eylem: 'dov', karisim: 0.4 },
+        { yazi: 'Unu tart ve havana ekle.', tikla: 'un', eylem: 'ekle', kap: 'havan', tart: '1 libre ≈ 327 g',
+          kaynak: '…bir libre buğday unu ya da daha yumuşak bir hamur için yarım libre ince un eklenip peynirle iyice karıştırılır…' },
+        { yazi: 'Unu peynirle iyice karıştır.', tikla: 'havan', eylem: 'dov', karisim: 0.7 },
+        { yazi: 'Yumurtayı ekle.', tikla: 'yumurta', eylem: 'ekle', kap: 'havan',
+          kaynak: '…bir yumurta eklenip hepsi iyice yoğrulur.' },
+        { yazi: 'Hepsini iyice yoğur.', tikla: 'havan', eylem: 'dov', karisim: 1 },
+        { yazi: 'Hamurdan bir somun yap.', tikla: 'havan', eylem: 'sekillendir',
+          kaynak: 'Bir somun yapılır…' },
+        { yazi: 'Somunu yaprakların üstüne koy.', tikla: 'defne', eylem: 'ekle', kap: 'urun',
+          kaynak: '…yaprakların üzerine konur…',
+          not: 'Cato yaprağın türünü belirtmez; modern yeniden yapımlarda genellikle defne yaprağı kullanılır ve ekmeğe hoş bir koku verir.' },
+        { yazi: 'Somunu ocağın sıcak yüzeyine, ateşin kenarına koy.', tikla: 'kenar', eylem: 'tasi', yer: 'kenar',
+          kaynak: '…sıcak bir ocakta…',
+          not: 'Isı düğmeyle değil, kabın ateşe uzaklığıyla ayarlanırdı.' },
+        { yazi: 'Üstüne kil kapağı (<i>testum</i>) kapat.', tikla: 'testum', eylem: 'kapak',
+          kaynak: '…bir çömlek kapağın altında…',
+          not: '“Çömlek kapak” burada Latince <i>testum</i>’dur: taşınabilir fırın kapağı. Bugünkü sac kapağa çok benzer.' },
+        { yazi: 'Kapağın üstüne ve etrafına kor yığ.', tikla: 'koz', eylem: 'kor',
+          not: 'Fırını olmayan bir ev de böyle fırınlama yapabilirdi: kapağın üstüne ve etrafına sıcak közler yığılırdı.' },
+        { yazi: 'Yavaşça pişir.', tikla: 'testum', eylem: 'pisir', renk: '#C98F4A',
+          kaynak: '…yavaşça pişirilir.' },
+        { yazi: 'Kapağı kaldır ve somunu servis tepsisine al.', tikla: 'testum', eylem: 'servis',
+          not: 'Yemek mutfaktan sofraya genellikle <i>discus</i> denen büyük, yuvarlak bir tepsiyle getirilirdi.' },
+      ],
+      sonuc: {
+        baslik: '<i>Libum</i> hazır',
+        yazi: '<i>Libum</i> aynı zamanda tanrılara sunulan kekin adıydı: Romalılar doğum günlerinde kişinin koruyucu ruhu olan Genius’a libum sunardı.',
+        alinti: 'İki libre peynir havanda iyice ezilir; bir libre buğday unu ya da daha yumuşak bir hamur için yarım libre ince un eklenip peynirle iyice karıştırılır; bir yumurta eklenip hepsi iyice yoğrulur. Bir somun yapılır, yaprakların üzerine konur ve sıcak bir ocakta, bir çömlek kapağın altında yavaşça pişirilir.',
+        alintiKaynak: 'Cato, <i>De Agri Cultura</i> 75 (Loeb çevirisinden)',
+      },
+    },
+    {
+      kimlik: 'globi',
+      hazir: true,
+      ad: '<i>Globi</i>',
+      altBaslik: 'Ballı ve haşhaşlı peynir topları',
+      kaynak: 'Cato, <i>De Agri Cultura</i> 79',
+      ikon: 'tarifGlobi',
+      raf: ['peynir', 'kavilca', 'domuzYagi', 'bal', 'hashas'],
+      urun: 'globi',              // hamurdan küçük toplar yapılır
+      macunRengi: '#EAD9B4',
+      bugun: 'Kavılca bulunmazsa irmik ya da normal un kullanılabilir. Domuz yağı yerine sıvı yağ kullanılabilir.',
+      adimlar: [
+        { yazi: 'Peyniri havana koy.', tikla: 'peynir', eylem: 'ekle', kap: 'havan' },
+        { yazi: 'Kavılca ununu ekle.', tikla: 'kavilca', eylem: 'ekle', kap: 'havan',
+          not: 'Kavılca (İngilizce <i>spelt</i>) eski bir buğday türüdür.' },
+        { yazi: 'Peyniri unla iyice karıştır.', tikla: 'havan', eylem: 'dov', karisim: 1,
+          kaynak: 'Peynir ve kavılca unu “aynı şekilde”, yani önceki tariflerdeki gibi karıştırılır…' },
+        { yazi: 'İstediğin sayıda top yap.', tikla: 'havan', eylem: 'sekillendir',
+          kaynak: '…ve istenen sayıda top yapılır.' },
+        { yazi: 'Bakır kabı közün üstüne koy.', tikla: 'bakirKap', eylem: 'kapKoy', kap: 'bakirKap', yer: 'koz',
+          kaynak: 'Sıcak bir bakır kaba domuz yağı konur…' },
+        { yazi: 'Domuz yağını kaba koy ve ısıt.', tikla: 'domuzYagi', eylem: 'ekle', kap: 'bakirKap', kaynat: true,
+          not: 'Domuz yağı Roma’da en yaygın kızartma yağıydı.' },
+        { yazi: 'Topları birer ikişer kızart.', tikla: 'urun', eylem: 'kizart', kap: 'bakirKap', renk: '#DDB878',
+          kaynak: '…toplar birer ikişer kızartılır…' },
+        { yazi: 'İki çubukla sık sık çevir.', tikla: 'cubuklar', eylem: 'cevir', kap: 'bakirKap', renk: '#C98F3E',
+          kaynak: '…ve iki çubukla sık sık çevrilir.',
+          not: '“İki çubuk”, maşa yerine kullanılan basit sopalardır.' },
+        { yazi: 'Pişince çıkar ve servis tepsisine al.', tikla: 'urun', eylem: 'servis',
+          kaynak: 'Pişince çıkarılır…' },
+        { yazi: 'Üzerine bal sür.', tikla: 'bal', eylem: 'sur', durum: 'balli',
+          kaynak: '…üzerine bal sürülür…' },
+        { yazi: 'Haşhaş serp ve servis et.', tikla: 'hashas', eylem: 'serp', hedef: 'urun', durum: 'hashasli',
+          kaynak: '…haşhaş serpilir ve servis edilir.' },
+      ],
+      sonuc: {
+        baslik: '<i>Globi</i> hazır',
+        yazi: 'Hamurun kızartılıp bal ya da şurupla tatlandırılması Akdeniz’de bugün de çok yaygındır: Türkiye’de lokma, İtalya’da struffoli, Yunanistan’da loukoumades. Bu bir benzerliktir; globi’nin bu tatlıların doğrudan atası olduğunu söyleyemeyiz.',
+        alinti: 'Peynir ve kavılca unu aynı şekilde karıştırılır ve istenen sayıda top yapılır. Sıcak bir bakır kaba domuz yağı konur, toplar birer ikişer kızartılır ve iki çubukla sık sık çevrilir. Pişince çıkarılır, üzerine bal sürülür, haşhaş serpilir ve servis edilir.',
+        alintiKaynak: 'Cato, <i>De Agri Cultura</i> 79 (Loeb çevirisinden)',
+      },
+    },
+    {
+      kimlik: 'dulcia',
+      hazir: true,
+      ad: '<i>Dulcia domestica</i>',
+      altBaslik: 'Balda kızartılmış hurma',
+      kaynak: 'Apicius VII',
+      ikon: 'tarifDulcia',
+      raf: ['hurma', 'ceviz', 'camfistigi', 'karabiber', 'tuz', 'bal'],
+      urun: 'hurma',
+      macunRengi: '#CBC796',
+      bugun: 'On dakikalık bir tariftir. Tavada balı ısıt, doldurulmuş hurmaları kısa süre içinde çevirerek kızart, bir tabakta soğumaya bırak.',
+      adimlar: [
+        { yazi: 'Hurmaları tahtaya al.', tikla: 'hurma', eylem: 'ekle', kap: 'tahta',
+          not: 'Hurma Kuzey Afrika ve Yakın Doğu’dan geliyordu, yani Roma’da ithal bir lükstü.' },
+        { yazi: 'Bıçakla hurmaların çekirdeğini çıkar.', tikla: 'culter', eylem: 'kes', durum: 'cekirdeksiz',
+          kaynak: '“Hurmaların çekirdeğini çıkar…”',
+          not: 'Latincesi: <i>palmulas vel dactylos excepto semine…</i>' },
+        { yazi: 'Hurmaları doldur: ceviz, çam fıstığı ya da çekilmiş karabiber.', tikla: ['ceviz', 'camfistigi', 'karabiber'], herhangi: true, eylem: 'doldur',
+          kaynak: '“…ceviz, çam fıstığı ya da çekilmiş karabiberle doldur.”',
+          not: 'Tarif bu üçünden birini seçmeye izin verir.' },
+        { yazi: 'Dışlarına tuz serp.', tikla: 'tuz', eylem: 'serp', hedef: 'urun', durum: 'tuzlu',
+          kaynak: '“Dışına tuz serp…”' },
+        { yazi: 'Kızartma tavasını (<i>sartago</i>) közün üstüne koy.', tikla: 'sartago', eylem: 'kapKoy', kap: 'sartago', yer: 'koz',
+          not: '<i>Sartago</i>, kenarında dökme ağzı olan kızartma tavasıdır; et ve balık kızartmak, yağ ısıtmak için kullanılırdı.' },
+        { yazi: 'Balı tavaya koy ve kaynat.', tikla: 'bal', eylem: 'ekle', kap: 'sartago', kaynat: true,
+          kaynak: '“…kaynatılmış balda…”' },
+        { yazi: 'Hurmaları balda kızart.', tikla: 'urun', eylem: 'kizart', kap: 'sartago', durum: 'kizarmis',
+          kaynak: '“…kaynatılmış balda kızart…”' },
+        { yazi: 'Servis et.', tikla: 'urun', eylem: 'servis',
+          kaynak: '“…ve servis et.”' },
+      ],
+      sonuc: {
+        baslik: '<i>Dulcia domestica</i> hazır',
+        yazi: 'Roma’nın tatlı-tuzlu damak zevkinin en net örneklerinden biri: tatlı hurmanın üzerinde tuz ve karabiber. <i>Dulcia domestica</i> “ev tatlısı” anlamına gelir.',
+        alinti: '“Hurmaların çekirdeğini çıkar; ceviz, çam fıstığı ya da çekilmiş karabiberle doldur. Dışına tuz serp, kaynatılmış balda kızart ve servis et.”',
+        alintiKaynak: 'Apicius VII',
+      },
+    },
+    {
+      kimlik: 'conditum',
+      hazir: true,
+      ad: '<i>Conditum paradoxum</i>',
+      altBaslik: '“Şaşırtıcı” baharatlı şarap',
+      kaynak: 'Apicius I.1',
+      ikon: 'tarifConditum',
+      raf: ['bal', 'sarap', 'karabiber', 'damlaSakizi', 'sumbul', 'safran', 'hurmaCekirdegi', 'komur'],
+      urun: 'kadeh',              // sonunda süzülen şarap bir kadehte görünür
+      macunRengi: '#CBC796',
+      bugun: 'Alkolsüz bir versiyonu üzüm suyuyla yapılabilir.',
+      adimlar: [
+        { yazi: 'Tencereyi (<i>olla</i>) közün üstüne koy.', tikla: 'olla', eylem: 'kapKoy', kap: 'olla', yer: 'koz',
+          not: 'Bu tarif Apicius kitabının ilk tarifidir.' },
+        { yazi: 'Balı ölç ve tencereye koy.', tikla: 'bal', eylem: 'ekle', kap: 'olla', olcu: '6 sextarius ≈ 3 litre',
+          kaynak: '6 sextarius bal…',
+          not: 'Sıvılar için standart ölçüler vardı: bir <i>sextarius</i> yaklaşık yarım litredir.' },
+        { yazi: 'Şarabı ölç ve ekle.', tikla: 'sarap', eylem: 'ekle', kap: 'olla', olcu: '2 sextarius ≈ 1 litre',
+          kaynak: '…2 sextarius şarapla birlikte bir kapta ısıtılır…' },
+        { yazi: 'Isıt; kaynarken sürekli karıştır.', tikla: 'olla', eylem: 'pisir', kap: 'olla', kopuk: true, bekleme: 'Kaynıyor, karıştırılıyor…',
+          kaynak: '…ve kaynarken sürekli karıştırılır…' },
+        { yazi: 'Taşmaya başlarsa biraz soğuk şarap ekle.', tikla: 'sarap', eylem: 'ekle', kap: 'olla',
+          kaynak: '…taşmaya başlarsa biraz soğuk şarap eklenir.' },
+        { yazi: 'Ateşten al ve köpüğünü al.', tikla: 'olla', eylem: 'kapKoy', kap: 'olla', yer: 'kenar', kopukAl: true,
+          kaynak: 'Ateşten alınıp köpüğü alınır…' },
+        { yazi: 'Isıtmayı iki üç kez tekrarla.', tikla: 'olla', eylem: 'pisir', kap: 'olla', yer: 'koz', bekleme: 'Yeniden ısınıyor…',
+          kaynak: '…ısıtma işlemi iki üç kez tekrarlanır.' },
+        { yazi: 'Baharatları ekle.', tikla: ['karabiber', 'damlaSakizi', 'sumbul', 'safran', 'hurmaCekirdegi'], eylem: 'ekle', kap: 'olla',
+          olculer: { karabiber: '4 ons ≈ 108 g', damlaSakizi: '3 scripulum ≈ 3,3 g', sumbul: '1 drahmi', safran: '1 drahmi', hurmaCekirdegi: '5 drahmi' },
+          kaynak: 'Sonra karışıma dört ons karabiber, üç scripulum damla sakızı, birer drahmi sümbül kökü (ya da defne yaprağı) ve safran, şaraba yatırılmış beş drahmi kavrulmuş hurma çekirdeği eklenir.',
+          not: 'Damla sakızı (<i>mastiche</i>), Ege’deki Sakız Adası’nda yetişen sakız ağacının reçinesidir. Sümbül kökü (nardin) Himalayalar’dan gelen çok pahalı bir aromatik bitkiydi; tarifte bulunması hem lüksün hem de Hindistan ticaretinin işaretidir.' },
+        { yazi: 'Bir gece beklet.', tikla: 'olla', eylem: 'gece', kap: 'olla',
+          kaynak: 'Bir gece bekletilir…' },
+        { yazi: 'Ertesi gün hafif şarabı ekle.', tikla: 'sarap', eylem: 'ekle', kap: 'olla', olcu: '18 sextarius ≈ 9 litre',
+          kaynak: '…ertesi gün 18 sextarius hafif şarap eklenir…',
+          not: 'Toplamda yaklaşık 6 ölçü bala 20 ölçü şarap düşer: 3 litre bala 10 litre şarap.' },
+        { yazi: 'Ezilmiş odun kömürüyle berraklaştır.', tikla: 'komur', eylem: 'ekle', kap: 'olla', icerikRengi: '#9A4A2A',
+          kaynak: '…berraklaştırmak için ezilmiş odun kömürü kullanılır…' },
+        { yazi: 'Süzgeçten (<i>colum</i>) geçirip kadehe süz.', tikla: 'colum', eylem: 'suz',
+          kaynak: '…ve süzülür.',
+          not: '<i>Colum</i>, delikli bronz bir kaptır; yemeği süzmenin yanında şarabı soğutmak için de kullanılırdı.' },
+      ],
+      sonuc: {
+        baslik: '<i>Conditum paradoxum</i> hazır',
+        yazi: 'Bu oranla içecek bugünkü şaraptan çok bir şurubu ya da likörü andırır; büyük ihtimalle sulandırılarak içiliyordu. <i>Paradoxum</i> “şaşırtıcı, beklenmedik” anlamına gelir.',
+        alinti: '6 sextarius bal, 2 sextarius şarapla birlikte bir kapta ısıtılır ve kaynarken sürekli karıştırılır; taşmaya başlarsa biraz soğuk şarap eklenir. Ateşten alınıp köpüğü alınır, ısıtma işlemi iki üç kez tekrarlanır. Sonra karışıma dört ons karabiber, üç scripulum damla sakızı, birer drahmi sümbül kökü (ya da defne yaprağı) ve safran, şaraba yatırılmış beş drahmi kavrulmuş hurma çekirdeği eklenir. Bir gece bekletilir, ertesi gün 18 sextarius hafif şarap eklenir; berraklaştırmak için ezilmiş odun kömürü kullanılır ve süzülür.',
+        alintiKaynak: 'Apicius I.1 (Vehling çevirisine göre)',
+      },
+    },
+  ],
+};
+</script>
+
+<!-- Yazı tipleri internetten gelir. İnternet yoksa sayfa beklemez, Georgia kullanılır. -->
+<link rel="stylesheet" media="print" onload="this.media='all'"
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap">
+
+<style>
+/* ===== GÖRÜNÜM: RENKLER VE YAZI TİPLERİ ===== */
+:root {
+  --koyu: #2A1E17;
+  --acik-zemin: #F4ECDF;
+  --ikinci-zemin: #E8DCC7;
+  --kart-zemin: #FBF6EE;
+  --vurgu: #9A3B22;
+  --kiremit: #B4472B;
+  --acik-vurgu: #E0956F;
+  --kor: #D9622B;
+  --ates: #F2A541;
+  --yumusak-metin: #4A3A2E;
+  --basari: #2E5E4E;
+  --baslik-yazi: 'Cinzel', Georgia, serif;
+  --metin-yazi: 'EB Garamond', Georgia, serif;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--koyu);
+}
+body {
+  font-family: var(--metin-yazi);
+  color: var(--koyu);
+  user-select: none;
+}
+
+/* ===== GÖRÜNÜM: 1920×1080 SAHNE, PENCEREYE GÖRE ÖLÇEKLENİR ===== */
+#sahne {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1920px;
+  height: 1080px;
+  transform: translate(-50%, -50%) scale(var(--olcek, 1));
+  display: flex;
+  flex-direction: column;
+  background: var(--acik-zemin);
+  font-size: 26px;
+}
+
+/* ===== GÖRÜNÜM: ÜST ÇUBUK VE ALT NOT SATIRI ===== */
+#ust {
+  flex: none;
+  height: 104px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding: 0 40px;
+  background: var(--koyu);
+}
+#ust h1 {
+  margin: 0 auto 0 0;
+  font-family: var(--baslik-yazi);
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--acik-vurgu);
+}
+.ust-dugme {
+  min-height: 68px;
+  padding: 0 28px;
+  font-family: var(--baslik-yazi);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--acik-zemin);
+  background: transparent;
+  border: 2px solid rgba(244, 236, 223, 0.35);
+  border-radius: 14px;
+  cursor: pointer;
+}
+.ust-dugme:hover { border-color: var(--acik-vurgu); }
+.bloga-don {
+  padding: 8px 18px;
+  font-family: var(--baslik-yazi);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--acik-zemin);
+  text-decoration: none;
+  border: 2px solid rgba(244, 236, 223, 0.35);
+  border-radius: 12px;
+}
+.bloga-don:hover { border-color: var(--acik-vurgu); }
+.bloga-don:focus-visible { outline: 4px solid var(--kor); outline-offset: 3px; }
+#alt {
+  flex: none;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  background: var(--ikinci-zemin);
+  color: var(--yumusak-metin);
+  font-size: 24px;
+}
+
+main { flex: 1; min-height: 0; position: relative; }
+.ekran { position: absolute; inset: 0; padding: 20px 40px 16px; }
+
+/* ===== GÖRÜNÜM: DÜĞMELER ===== */
+button { font: inherit; }
+button:focus-visible { outline: 4px solid var(--kor); outline-offset: 3px; }
+.dugme {
+  min-height: 64px;
+  padding: 8px 24px;
+  font-family: var(--metin-yazi);
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--koyu);
+  background: var(--kart-zemin);
+  border: 3px solid var(--kiremit);
+  border-radius: 12px;
+  cursor: pointer;
+}
+.dugme:hover { background: var(--acik-zemin); }
+.dugme.ana { color: var(--kart-zemin); background: var(--vurgu); border-color: var(--vurgu); }
+.dugme.ana:hover { background: var(--koyu); border-color: var(--koyu); }
+
+/* ===== GÖRÜNÜM: EKRAN 1 · TARİF SEÇİMİ ===== */
+#secim-ekrani {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+}
+#secim-ekrani h2 { margin: 0; font-family: var(--baslik-yazi); font-size: 52px; color: var(--vurgu); }
+#secim-ekrani > p { margin: 0; font-size: 30px; color: var(--yumusak-metin); }
+.tarif-kartlari {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 26px;
+  max-width: 1740px;
+  margin-top: 18px;
+}
+.tarif-karti {
+  position: relative;
+  width: 410px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 18px 22px;
+  font-family: var(--metin-yazi);
+  color: var(--koyu);
+  background: var(--kart-zemin);
+  border: 4px solid var(--kiremit);
+  border-radius: 22px;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+}
+.tarif-karti:hover:not(:disabled) { transform: translateY(-4px); background: var(--acik-zemin); }
+.tarif-karti svg { width: 120px; height: 120px; }
+.tarif-adi { font-size: 40px; font-weight: 600; line-height: 1.1; }
+.tarif-alt { font-size: 26px; line-height: 1.25; color: var(--yumusak-metin); }
+.tarif-kaynak { font-size: 24px; font-weight: 600; color: var(--kiremit); }
+.tarif-karti:disabled { cursor: default; border-color: var(--ikinci-zemin); }
+.tarif-karti:disabled > :not(.rozet) { opacity: 0.45; }
+.rozet {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  padding: 2px 14px;
+  font-family: var(--baslik-yazi);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--kiremit);
+  background: var(--kart-zemin);
+  border: 3px dashed var(--kiremit);
+  border-radius: 10px;
+}
+
+/* ===== GÖRÜNÜM: EKRAN 2 · MUTFAK ===== */
+#mutfak-ekrani {
+  display: grid;
+  grid-template-columns: 1fr 600px;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 40px;
+}
+.sol { position: relative; display: flex; flex-direction: column; min-height: 0; }
+.sol h2 { margin: 0; font-family: var(--baslik-yazi); font-size: 42px; line-height: 1.15; color: var(--vurgu); }
+.baslik-alt { font-family: var(--metin-yazi); font-size: 28px; font-weight: 400; color: var(--yumusak-metin); }
+.mutfak-alani { flex: 1; min-height: 0; display: flex; gap: 20px; margin-top: 12px; }
+
+/* Kiler rafı: o tarifin malzemeleri; her katın altında tahta */
+.kiler {
+  flex: none;
+  width: 360px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: repeat(5, 1fr);
+  padding: 8px 12px 0;
+  background: var(--ikinci-zemin);
+  border-radius: 18px;
+}
+.malzeme {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  min-height: 64px;
+  padding: 4px 6px 6px;
+  font-family: var(--metin-yazi);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--koyu);
+  background: transparent;
+  border: none;
+  border-bottom: 10px solid #8B5E3C;
+  border-radius: 0;
+  cursor: default;
+}
+.malzeme svg { flex: none; width: 80px; height: 80px; }
+.malzeme.parla { cursor: pointer; background: var(--kart-zemin); animation: parlaKutu 1.2s ease-in-out infinite alternate; }
+@keyframes parlaKutu {
+  from { box-shadow: inset 0 0 0 3px rgba(242, 165, 65, 0.45); }
+  to   { box-shadow: inset 0 0 0 7px var(--ates); }
+}
+.malzeme.kullanildi svg { opacity: 0.3; }
+.malzeme.kullanildi span::before { content: '✓ '; color: var(--basari); }
+.raf-bos { border-bottom: 10px solid #8B5E3C; }
+
+/* Mutfak çizimi */
+#mutfak { flex: 1; min-width: 0; height: 100%; display: block; }
+.svg-etiket { font-family: var(--metin-yazi); font-size: 24px; font-style: italic; fill: var(--yumusak-metin); }
+.svg-ad { font-family: var(--metin-yazi); font-size: 28px; font-weight: 600; fill: var(--koyu); }
+.svg-not { font-family: var(--metin-yazi); font-size: 24px; font-style: italic; fill: var(--yumusak-metin); }
+#mutfak .parla { cursor: pointer; animation: parla 1.2s ease-in-out infinite alternate; }
+@keyframes parla {
+  from { filter: drop-shadow(0 0 2px rgba(242, 165, 65, 0.5)); }
+  to   { filter: drop-shadow(0 0 9px #F2A541) drop-shadow(0 0 3px #F2A541); }
+}
+#mutfak .bolge { fill: transparent; }
+#mutfak .bolge.parla { fill: rgba(242, 165, 65, 0.15); stroke: var(--ates); stroke-width: 4; stroke-dasharray: 12 8; filter: none; animation: none; }
+.hareketli { transition: transform 0.7s ease, opacity 0.5s ease; }
+.gecissiz, .gecissiz * { transition: none !important; }
+#mutfak .gizli { opacity: 0; pointer-events: none; }
+.svg-etiket-duz { font-family: var(--metin-yazi); font-size: 24px; fill: var(--yumusak-metin); }
+
+/* Hazırlanan yemeğin halleri: tarif ilerledikçe #urun'a sınıf eklenir */
+.hamur { fill: var(--hamur, #EBDDB6); transition: fill 3s ease; }
+#urun .durum { display: none; }
+#urun.ozsuz .oz, #urun.cekirdeksiz .yarik, #urun.dolu .dolgu, #urun.tuzlu .tuz,
+#urun.kizarmis .bal-kaplama, #urun.balli .parlak, #urun.hashasli .hashas { display: inline; }
+#urun.ozsuz .sap { display: none; }
+#urun.kiyilmis .kiyma, #urun.dolu-camfistigi .fistik, #urun.dolu-karabiber .biber,
+#urun.sarili .ag, #urun.soslu .sos, #urun.dolu .kadeh-sarap { display: inline; }
+#urun.kiyilmis .parca-butun { display: none; }
+#urun.pismis .ag { opacity: 0.35; }           /* gömlek pişerken erir */
+.kadeh-sarap { fill: var(--kadeh, #7A3A2A); }
+#olcu-etiketi { opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+#gece { pointer-events: none; }
+.armut-govde { fill: #C9B84A; transition: fill 2s ease; }
+#urun.haslanmis .armut-govde { fill: #DCCF8A; }
+.dolgu { fill: var(--dolgu, #A87A4A); }
+
+/* Kapların içindekiler (su, bal, yağ, patina karışımı) */
+.icerik { transform-box: fill-box; transform-origin: center; transition: fill 3s ease; }
+
+/* Kaynarken ve kızarırken yükselen kabarcıklar */
+.kabarcik circle { fill: var(--kart-zemin); opacity: 0; animation: kabarcik 1.2s ease-out infinite; }
+@keyframes kabarcik {
+  0%   { transform: translateY(0); opacity: 0; }
+  30%  { opacity: 0.9; }
+  100% { transform: translateY(-18px); opacity: 0; }
+}
+#kabarcik { pointer-events: none; }
+#arac-testum .kor-katmani { opacity: 0; transition: opacity 0.4s; }
+#arac-testum.korlu .kor-katmani { opacity: 1; }
+#testum-etiketi { transition: opacity 0.4s; }
+#havan-icerik { transition: opacity 0.6s; }
+#havan-icerik.bos { opacity: 0; }
+#havan-macun { transform-box: fill-box; transform-origin: center; transition: transform 0.5s ease; }
+.benek { animation: dus 0.45s ease-out backwards; }
+@keyframes dus { from { transform: translateY(-30px); opacity: 0; } }
+#statera-kol { transform-box: view-box; transform-origin: 640px 118px; }
+#tarti-etiketi { opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+#efekt, #buhar { pointer-events: none; }
+
+/* Sakin animasyonlar: alev, kor parıltısı, buhar */
+.alev { transform-box: fill-box; transform-origin: 50% 100%; animation: alev 2.6s ease-in-out infinite alternate; }
+@keyframes alev { from { transform: scale(1, 1); } to { transform: scale(0.94, 1.08); } }
+.kor-parilti { animation: parilti 3s ease-in-out infinite alternate; }
+@keyframes parilti { from { opacity: 0.8; } to { opacity: 1; } }
+.buhar path {
+  fill: none;
+  stroke: var(--kart-zemin);
+  stroke-width: 6;
+  stroke-linecap: round;
+  opacity: 0;
+  animation: buhar 2.8s ease-out infinite;
+}
+@keyframes buhar {
+  0%   { transform: translateY(0); opacity: 0; }
+  30%  { opacity: 0.85; }
+  100% { transform: translateY(-50px); opacity: 0; }
+}
+
+/* Raftan kaba uçan malzeme */
+.ucan {
+  position: absolute;
+  z-index: 50;
+  width: 84px;
+  height: 84px;
+  margin: -42px 0 0 -42px;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 8px rgba(42, 30, 23, 0.3));
+}
+.ucan svg { width: 100%; height: 100%; }
+
+/* Sağdaki panel */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  padding: 22px 26px;
+  background: var(--kart-zemin);
+  border: 2px solid var(--ikinci-zemin);
+  border-radius: 18px;
+}
+.adim-sayac { font-family: var(--baslik-yazi); font-size: 26px; font-weight: 700; color: var(--kiremit); }
+.ilerleme { display: flex; gap: 6px; }
+.ilerleme span { flex: 1; height: 12px; border-radius: 6px; background: var(--ikinci-zemin); }
+.ilerleme span.bitti { background: var(--basari); }
+.ilerleme span.simdi { background: var(--ates); }
+.adim-yazi { font-size: 34px; font-weight: 600; line-height: 1.25; }
+.adim-tikla { min-height: 34px; font-size: 26px; font-weight: 600; color: var(--vurgu); }
+.surec { height: 16px; margin-top: 8px; overflow: hidden; background: var(--ikinci-zemin); border-radius: 8px; }
+.surec div { width: 0%; height: 100%; background: var(--ates); }
+.kutu { padding: 12px 18px; background: var(--acik-zemin); border-left: 6px solid var(--acik-vurgu); border-radius: 8px; }
+.kutu-baslik { font-family: var(--baslik-yazi); font-size: 24px; font-weight: 700; color: var(--kiremit); }
+.kutu-yazi { margin-top: 4px; font-size: 26px; font-style: italic; line-height: 1.35; }
+.adim-not { margin: 0; font-size: 26px; line-height: 1.35; color: var(--yumusak-metin); }
+.bugun { margin-top: auto; padding: 14px 18px; background: var(--acik-zemin); border-radius: 12px; }
+.bugun p { margin: 6px 0 0; font-size: 24px; line-height: 1.35; }
+
+/* Sonuç kartı (mutfağın üstünde açılır) */
+#sonuc-karti {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  padding: 22px 30px;
+  background: var(--kart-zemin);
+  border: 4px solid var(--basari);
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(42, 30, 23, 0.25);
+  animation: kartGel 0.35s ease-out;
+}
+@keyframes kartGel { from { opacity: 0; transform: translateY(12px); } }
+#sonuc-karti h3 { margin: 0; font-family: var(--baslik-yazi); font-size: 48px; color: var(--basari); }
+#sonuc-yazi { margin: 8px 0 0; font-size: 28px; line-height: 1.35; }
+#sonuc-karti blockquote {
+  margin: 14px 0 0;
+  padding: 4px 0 4px 18px;
+  font-size: 26px;
+  font-style: italic;
+  line-height: 1.35;
+  border-left: 5px solid var(--acik-vurgu);
+}
+#sonuc-karti cite { display: block; margin-top: 4px; font-size: 24px; font-style: normal; color: var(--yumusak-metin); }
+.sonuc-dugmeleri { display: flex; gap: 16px; margin-top: 18px; }
+
+/* Hareket azaltma tercihi açık olan bilgisayarlarda animasyonlar durur */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .buhar path { opacity: 0.6; }
+}
+</style>
+</head>
+
+<body>
+<div id="sahne">
+
+  <header id="ust">
+    <a class="bloga-don" href="blog.html">&larr; Blog</a>
+    <h1 id="sayfa-basligi"></h1>
+    <button class="ust-dugme" id="listeye-don" hidden></button>
+  </header>
+
+  <main>
+
+    <!-- ===== EKRAN 1: TARİF SEÇİMİ ===== -->
+    <section class="ekran" id="secim-ekrani">
+      <h2 id="secim-baslik"></h2>
+      <p id="secim-not"></p>
+      <div class="tarif-kartlari" id="tarif-kartlari"></div>
+    </section>
+
+    <!-- ===== EKRAN 2: MUTFAK ===== -->
+    <section class="ekran" id="mutfak-ekrani" hidden>
+      <div class="sol">
+        <h2 id="tarif-basligi"></h2>
+        <div class="mutfak-alani">
+          <!-- Kiler rafı: tarifin malzemeleri buraya eklenir -->
+          <div class="kiler" id="kiler"></div>
+
+          <svg id="mutfak" viewBox="0 0 820 820" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Roma mutfağı">
+            <defs>
+              <clipPath id="havan-kirpma"><ellipse cx="0" cy="1" rx="59" ry="27"/></clipPath>
+            </defs>
+
+            <!-- Duvar ve zemin -->
+            <rect x="0" y="0" width="820" height="820" rx="18" fill="#E8DCC7"/>
+            <path d="M0,700 H820 V802 Q820,820 802,820 H18 Q0,820 0,802 Z" fill="#CDB898"/>
+            <line x1="0" y1="700" x2="820" y2="700" stroke="#A48C6B" stroke-width="3"/>
+
+            <!-- Duvardaki askı çıtası -->
+            <line x1="20" y1="64" x2="800" y2="64" stroke="#8B5E3C" stroke-width="8" stroke-linecap="round"/>
+
+            <!-- Kızartma tavası (sartago): duvarda önden görünür; ocağa konunca yandan görünüşü kullanılır -->
+            <g id="arac-sartago" class="hareketli" data-hedef="sartago">
+              <line x1="225" y1="64" x2="225" y2="118" stroke="#4A3A2E" stroke-width="8" stroke-linecap="round"/>
+              <circle cx="225" cy="164" r="48" fill="#4A3A2E"/>
+              <circle cx="225" cy="164" r="38" fill="#5E4A3C"/>
+            </g>
+            <text id="sartago-etiketi" class="svg-etiket hareketli" x="225" y="240" text-anchor="middle">sartago</text>
+
+            <!-- Süzgeç (colum) -->
+            <g id="arac-colum" data-hedef="colum">
+              <rect x="296" y="66" width="88" height="106" fill="transparent"/>
+              <line x1="340" y1="64" x2="340" y2="124" stroke="#9C7A3C" stroke-width="6" stroke-linecap="round"/>
+              <path d="M300,124 H380 C380,152 362,168 340,168 C318,168 300,152 300,124 Z" fill="#B08850"/>
+              <g fill="#6E5428">
+                <circle cx="322" cy="136" r="2.5"/><circle cx="334" cy="140" r="2.5"/><circle cx="346" cy="140" r="2.5"/><circle cx="358" cy="136" r="2.5"/>
+                <circle cx="328" cy="150" r="2.5"/><circle cx="340" cy="154" r="2.5"/><circle cx="352" cy="150" r="2.5"/>
+              </g>
+            </g>
+            <text class="svg-etiket" x="340" y="200" text-anchor="middle">colum</text>
+
+            <!-- Bıçak (culter) -->
+            <g id="arac-culter" data-hedef="culter">
+              <rect x="405" y="66" width="42" height="122" fill="transparent"/>
+              <rect x="419" y="70" width="12" height="36" rx="4" fill="#6E4A2F"/>
+              <path d="M418,106 H432 L434,170 C430,182 422,180 418,170 Z" fill="#B9B2A6" stroke="#8C857A" stroke-width="2"/>
+            </g>
+            <text class="svg-etiket" x="425" y="212" text-anchor="middle">culter</text>
+
+            <!-- İki çubuk (kızartırken çevirmek için) -->
+            <g id="arac-cubuklar" data-hedef="cubuklar">
+              <rect x="460" y="66" width="40" height="134" fill="transparent"/>
+              <line x1="474" y1="70" x2="470" y2="196" stroke="#8B5E3C" stroke-width="5" stroke-linecap="round"/>
+              <line x1="486" y1="70" x2="490" y2="196" stroke="#8B5E3C" stroke-width="5" stroke-linecap="round"/>
+            </g>
+
+            <!-- Kantar (statera) -->
+            <line x1="640" y1="64" x2="640" y2="112" stroke="#4A3A2E" stroke-width="3"/>
+            <g id="statera-kol">
+              <line x1="555" y1="118" x2="775" y2="118" stroke="#6E4A2F" stroke-width="7" stroke-linecap="round"/>
+              <circle cx="640" cy="118" r="7" fill="#4A3A2E"/>
+              <g stroke="#4A3A2E" stroke-width="2"><line x1="560" y1="118" x2="528" y2="200"/><line x1="560" y1="118" x2="592" y2="200"/></g>
+              <path d="M520,198 H600 C598,210 582,216 560,216 C538,216 522,210 520,198 Z" fill="#9C7A3C"/>
+              <line x1="735" y1="118" x2="735" y2="150" stroke="#4A3A2E" stroke-width="2"/>
+              <path d="M735,150 C746,154 750,172 735,182 C720,172 724,154 735,150 Z" fill="#6E5428"/>
+            </g>
+            <text class="svg-etiket" x="735" y="226" text-anchor="middle">statera</text>
+
+            <!-- Ocak (focus): masa yüksekliğinde taş blok, altında yakacak için kemerli boşluk -->
+            <rect x="10" y="468" width="420" height="232" fill="#C2AA88"/>
+            <rect x="0" y="452" width="440" height="18" rx="4" fill="#D3BF9F"/>
+            <g stroke="#A48C6B" stroke-width="3">
+              <line x1="10" y1="572" x2="430" y2="572"/>
+              <line x1="150" y1="470" x2="150" y2="572"/>
+              <line x1="290" y1="470" x2="290" y2="572"/>
+            </g>
+            <path d="M140,700 V632 C140,588 300,588 300,632 V700 Z" fill="#4A3A2E"/>
+            <g fill="#8B5E3C">
+              <rect x="160" y="666" width="120" height="16" rx="8"/>
+              <rect x="172" y="650" width="98" height="16" rx="8"/>
+            </g>
+            <g fill="#C9A27A"><circle cx="168" cy="674" r="6"/><circle cx="180" cy="658" r="6"/></g>
+            <text class="svg-ad" x="82" y="510" text-anchor="middle">Köz</text>
+            <text class="svg-not" x="82" y="542" text-anchor="middle">harlı ateş</text>
+            <text class="svg-ad" x="220" y="510" text-anchor="middle">Izgara</text>
+            <text class="svg-not" x="220" y="542" text-anchor="middle">kısık ateş</text>
+            <text class="svg-ad" x="358" y="510" text-anchor="middle">Kenar</text>
+            <text class="svg-not" x="358" y="542" text-anchor="middle">sıcak tutma</text>
+            <text class="svg-etiket" x="75" y="640" text-anchor="middle">focus</text>
+            <text class="svg-etiket" x="75" y="668" text-anchor="middle">(ocak)</text>
+
+            <!-- Köz: harlı ateş (kor yığmak için tıklanır) -->
+            <g id="bolge-koz" data-hedef="koz">
+              <rect x="15" y="330" width="135" height="124" fill="transparent"/>
+              <path class="alev" fill="#D9622B" d="M25,440 C25,410 42,395 45,360 C48,395 65,410 65,440 Z"/>
+              <path class="alev" fill="#D9622B" d="M58,440 C58,400 78,378 82,335 C86,378 106,400 106,440 Z" style="animation-delay:-0.8s"/>
+              <path class="alev" fill="#D9622B" d="M99,440 C99,408 117,392 120,355 C123,392 141,408 141,440 Z" style="animation-delay:-1.5s"/>
+              <path class="alev" fill="#F2A541" d="M35,440 C35,422 44,412 45,392 C46,412 55,422 55,440 Z" style="animation-delay:-1.1s"/>
+              <path class="alev" fill="#F2A541" d="M70,440 C70,416 80,402 82,377 C84,402 94,416 94,440 Z" style="animation-delay:-1.9s"/>
+              <path class="alev" fill="#F2A541" d="M110,440 C110,421 119,410 120,389 C121,410 130,421 130,440 Z" style="animation-delay:-0.3s"/>
+              <path d="M18,456 C28,440 50,434 82,432 C114,434 136,440 148,456 Z" fill="#9A3B22"/>
+              <g class="kor-parilti">
+                <ellipse cx="38" cy="448" rx="13" ry="6" fill="#D9622B"/>
+                <ellipse cx="64" cy="440" rx="14" ry="6" fill="#F2A541"/>
+                <ellipse cx="96" cy="439" rx="14" ry="6" fill="#D9622B"/>
+                <ellipse cx="126" cy="447" rx="13" ry="6" fill="#F2A541"/>
+                <ellipse cx="82" cy="449" rx="9" ry="4" fill="#2A1E17"/>
+              </g>
+            </g>
+
+            <!-- Izgara / sacayak: kısık ateş -->
+            <g>
+              <path class="alev" fill="#D9622B" d="M200,450 C200,440 208,434 209,424 C210,434 218,440 218,450 Z"/>
+              <path class="alev" fill="#D9622B" d="M228,450 C228,441 235,436 236,427 C237,436 244,441 244,450 Z" style="animation-delay:-1.2s"/>
+              <path d="M160,456 C172,448 196,446 220,446 C244,446 268,448 280,456 Z" fill="#9A3B22"/>
+              <g class="kor-parilti">
+                <ellipse cx="184" cy="451" rx="10" ry="4" fill="#D9622B"/>
+                <ellipse cx="256" cy="451" rx="10" ry="4" fill="#F2A541"/>
+              </g>
+              <g stroke="#2A1E17" stroke-width="6" stroke-linecap="round">
+                <line x1="170" y1="412" x2="166" y2="452"/>
+                <line x1="220" y1="412" x2="220" y2="452"/>
+                <line x1="270" y1="412" x2="274" y2="452"/>
+              </g>
+              <rect x="158" y="406" width="124" height="8" rx="3" fill="#2A1E17"/>
+            </g>
+
+            <!-- Izgara ve kenar: kap ya da yemek konabilecek yerler -->
+            <rect id="bolge-izgara" class="bolge" data-hedef="izgara" x="152" y="330" width="138" height="124" rx="12"/>
+            <rect id="bolge-kenar" class="bolge" data-hedef="kenar" x="292" y="330" width="133" height="124" rx="12"/>
+
+            <!-- Tezgâh -->
+            <rect x="445" y="525" width="367" height="20" rx="4" fill="#8B5E3C"/>
+            <rect x="446" y="545" width="16" height="155" fill="#6E4A2F"/>
+            <rect x="795" y="545" width="16" height="155" fill="#6E4A2F"/>
+
+            <!-- Tezgâhın altındaki raf: tencere, sığ tava ve bakır kap burada durur -->
+            <rect x="462" y="655" width="333" height="10" fill="#8B5E3C"/>
+            <text class="svg-etiket" x="530" y="690" text-anchor="middle">olla</text>
+            <text class="svg-etiket" x="640" y="690" text-anchor="middle">patina</text>
+            <text class="svg-etiket-duz" x="740" y="690" text-anchor="middle">bakır kap</text>
+
+            <!-- Havan (mortarium) -->
+            <g id="arac-havan" data-hedef="havan" transform="translate(520 478)">
+              <ellipse cx="0" cy="47" rx="66" ry="7" fill="#2A1E17" opacity="0.18"/>
+              <path d="M-72,0 C-70,30 -35,48 0,48 C35,48 70,30 72,0 Z" fill="#9A3B22"/>
+              <path d="M-62,-8 L-90,-3 C-94,-2 -94,2 -90,3 L-62,8 Z" fill="#B4472B"/>
+              <ellipse cx="0" cy="0" rx="72" ry="35" fill="#B4472B"/>
+              <path d="M-90,0 L-60,1" stroke="#9A3B22" stroke-width="4" stroke-linecap="round"/>
+              <ellipse cx="0" cy="1" rx="61" ry="29" fill="#9A3B22"/>
+              <g clip-path="url(#havan-kirpma)">
+                <ellipse cx="0" cy="1" rx="59" ry="27" fill="#C97A50"/>
+                <ellipse cx="0" cy="7" rx="51" ry="21" fill="#DB9A6E"/>
+                <g id="havan-taneler"></g>
+                <g id="havan-icerik">
+                  <ellipse id="havan-macun" cx="0" cy="5" rx="52" ry="22" style="transform: scale(0)"/>
+                  <g id="havan-benekler"></g>
+                </g>
+              </g>
+              <line id="havaneli" x1="64" y1="-76" x2="22" y2="6" stroke="#8B5E3C" stroke-width="11" stroke-linecap="round"/>
+              <ellipse id="havaneli-bas" cx="22" cy="6" rx="8" ry="5" fill="#6E4A2F"/>
+            </g>
+            <text class="svg-etiket" x="528" y="580" text-anchor="middle">mortarium</text>
+
+            <!-- Tahta (kesme ve şekil verme yeri) -->
+            <g id="arac-tahta" data-hedef="tahta">
+              <rect x="596" y="440" width="108" height="85" fill="transparent"/>
+              <rect x="596" y="512" width="108" height="13" rx="3" fill="#B98A5A"/>
+              <rect x="596" y="512" width="108" height="4" rx="2" fill="#D0A574"/>
+              <g id="tahta-nesne" transform="translate(650 513)"></g>
+            </g>
+
+            <!-- Servis tepsisi (discus) -->
+            <g id="arac-discus" data-hedef="discus">
+              <ellipse cx="760" cy="519" rx="48" ry="11" fill="#9C7A3C"/>
+              <ellipse cx="760" cy="517" rx="42" ry="8" fill="#C9A25A"/>
+            </g>
+            <text class="svg-etiket" x="750" y="580" text-anchor="middle">discus</text>
+
+            <!-- Hazırlanan yemek: somun, top, armutlar, hurmalar… (parçaları tarife göre çizilir, yeri adım adım değişir) -->
+            <g id="urun" class="hareketli gizli" data-hedef="urun">
+              <g id="urun-yaprak" style="display:none">
+                <ellipse cx="-30" cy="-3" rx="36" ry="8" fill="#5E7A45" transform="rotate(-6 -30 -3)"/>
+                <ellipse cx="30" cy="-3" rx="36" ry="8" fill="#6E8B52" transform="rotate(6 30 -3)"/>
+                <ellipse cx="0" cy="-4" rx="30" ry="7" fill="#5E7A45"/>
+              </g>
+              <g id="urun-ogeler"></g>
+            </g>
+
+            <!-- Kaplar (yemekten sonra çizilir ki içlerine konan yemeğin alt kısmını örtsünler) -->
+            <!-- Tencere (olla): içinde su var -->
+            <g id="kap-olla" class="hareketli" data-hedef="olla" style="transform: translate(530px, 655px)">
+              <path d="M-32,0 C-46,-12 -46,-44 -26,-56 H26 C46,-44 46,-12 32,0 Z" fill="#A85A3A"/>
+              <path d="M-30,-44 C-34,-30 -32,-14 -24,-6" stroke="#C9764E" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.6"/>
+              <rect x="-30" y="-62" width="60" height="8" rx="4" fill="#8E4A2E"/>
+              <ellipse id="icerik-olla" class="icerik" cx="0" cy="-63" rx="25" ry="4" style="display:none"/>
+              <g id="kopuk-olla" fill="#FBF6EE" style="display:none">
+                <circle cx="-16" cy="-66" r="4"/><circle cx="-6" cy="-67" r="4.5"/><circle cx="5" cy="-66" r="4"/><circle cx="15" cy="-67" r="3.5"/>
+              </g>
+            </g>
+            <!-- Sığ tava (patina) -->
+            <g id="kap-patina" class="hareketli" data-hedef="patina" style="transform: translate(640px, 655px)">
+              <path d="M-50,-16 H50 C48,-6 40,0 30,0 H-30 C-40,0 -48,-6 -50,-16 Z" fill="#9A3B22"/>
+              <ellipse cx="0" cy="-16" rx="50" ry="6" fill="#B4472B"/>
+              <ellipse id="icerik-patina" class="icerik" cx="0" cy="-16" rx="44" ry="4.5" style="display:none"/>
+              <g id="patina-biber" fill="#2A1E17" style="display:none">
+                <circle cx="-34" cy="-16" r="1.6"/><circle cx="-24" cy="-18" r="1.6"/><circle cx="-14" cy="-15" r="1.6"/><circle cx="-4" cy="-18" r="1.6"/>
+                <circle cx="6" cy="-15" r="1.6"/><circle cx="16" cy="-18" r="1.6"/><circle cx="26" cy="-15" r="1.6"/><circle cx="35" cy="-17" r="1.6"/>
+                <circle cx="-18" cy="-19" r="1.4"/><circle cx="11" cy="-19" r="1.4"/>
+              </g>
+            </g>
+            <!-- Bakır kap (Cato'nun globi tarifindeki) -->
+            <g id="kap-bakirKap" class="hareketli" data-hedef="bakirKap" style="transform: translate(740px, 655px)">
+              <path d="M-40,-44 C-54,-44 -54,-30 -42,-30 M40,-44 C54,-44 54,-30 42,-30" stroke="#9A5A28" stroke-width="4" fill="none"/>
+              <path d="M-40,0 C-47,-10 -47,-40 -37,-48 H37 C47,-40 47,-10 40,0 Z" fill="#B87333"/>
+              <path d="M-44,-26 C-38,-22 38,-22 44,-26" stroke="#D08A4A" stroke-width="4" fill="none"/>
+              <rect x="-40" y="-53" width="80" height="7" rx="3" fill="#9A5A28"/>
+              <ellipse id="icerik-bakirKap" class="icerik" cx="0" cy="-54" rx="34" ry="4" style="display:none"/>
+            </g>
+            <!-- Kızartma tavası, yandan görünüş (ocağa konunca görünür) -->
+            <g id="kap-sartago" class="hareketli gizli" data-hedef="sartago" style="transform: translate(225px, 164px)">
+              <rect x="40" y="-15" width="58" height="6" rx="3" fill="#4A3A2E"/>
+              <path d="M-46,-16 H46 L38,0 H-38 Z" fill="#4A3A2E"/>
+              <ellipse id="icerik-sartago" class="icerik" cx="0" cy="-17" rx="42" ry="4" style="display:none"/>
+            </g>
+
+            <!-- Kaynarken yükselen kabarcıklar -->
+            <g id="kabarcik" class="kabarcik" style="display:none">
+              <circle cx="-16" cy="0" r="3"/>
+              <circle cx="-4" cy="0" r="2.5" style="animation-delay:0.4s"/>
+              <circle cx="8" cy="0" r="3" style="animation-delay:0.8s"/>
+              <circle cx="18" cy="0" r="2" style="animation-delay:0.2s"/>
+            </g>
+
+            <!-- Kil kapak (testum): duvarda asılı durur; üstüne kor yığılabilir -->
+            <text id="testum-etiketi" class="svg-etiket" x="95" y="212" text-anchor="middle">testum</text>
+            <g id="arac-testum" class="hareketli" data-hedef="testum" style="transform: translate(95px, 172px)">
+              <g transform="scale(0.7)">
+                <g class="kor-katmani"><g class="kor-parilti">
+                  <ellipse cx="-128" cy="-8" rx="22" ry="10" fill="#D9622B"/>
+                  <ellipse cx="-110" cy="-4" rx="16" ry="8" fill="#F2A541"/>
+                  <ellipse cx="128" cy="-8" rx="22" ry="10" fill="#D9622B"/>
+                  <ellipse cx="110" cy="-4" rx="16" ry="8" fill="#F2A541"/>
+                </g></g>
+                <path d="M-112,0 C-112,-80 -64,-122 0,-122 C64,-122 112,-80 112,0 Z" fill="#B4472B"/>
+                <path d="M-84,-36 C-82,-70 -56,-96 -24,-106" fill="none" stroke="#FBF6EE" stroke-opacity="0.3" stroke-width="8" stroke-linecap="round"/>
+                <rect x="-118" y="-12" width="236" height="12" rx="6" fill="#9A3B22"/>
+                <rect x="-9" y="-136" width="18" height="16" fill="#9A3B22"/>
+                <ellipse cx="0" cy="-138" rx="26" ry="9" fill="#9A3B22"/>
+                <g class="kor-katmani"><g class="kor-parilti">
+                  <ellipse cx="-52" cy="-118" rx="22" ry="10" fill="#D9622B"/>
+                  <ellipse cx="-20" cy="-128" rx="20" ry="10" fill="#F2A541"/>
+                  <ellipse cx="24" cy="-128" rx="20" ry="10" fill="#D9622B"/>
+                  <ellipse cx="56" cy="-116" rx="22" ry="10" fill="#F2A541"/>
+                  <ellipse cx="-36" cy="-134" rx="14" ry="7" fill="#2A1E17"/>
+                  <ellipse cx="40" cy="-136" rx="14" ry="7" fill="#2A1E17"/>
+                  <ellipse cx="0" cy="-146" rx="18" ry="8" fill="#D9622B"/>
+                </g></g>
+              </g>
+            </g>
+
+            <!-- Buhar (pişerken) -->
+            <g id="buhar" class="buhar" style="display:none">
+              <path d="M-24,0 c-8,-12 8,-22 0,-34 c-8,-12 8,-22 0,-34"/>
+              <path d="M0,-6 c-8,-12 8,-22 0,-34 c-8,-12 8,-22 0,-34" style="animation-delay:0.9s"/>
+              <path d="M24,0 c-8,-12 8,-22 0,-34 c-8,-12 8,-22 0,-34" style="animation-delay:1.8s"/>
+            </g>
+
+            <!-- Gece: “bir gece beklet” adımında mutfak kısa bir süre kararır -->
+            <rect id="gece" x="0" y="0" width="820" height="820" rx="18" fill="#1A2233" opacity="0"/>
+
+            <!-- Kısa süreli efektler (uçan kor, sarımsak kabukları) -->
+            <g id="efekt"></g>
+
+            <!-- Sıvı ölçüsü ya da baharat miktarı (kabın üstünde görünür) -->
+            <g id="olcu-etiketi">
+              <rect id="olcu-kutu" x="0" y="0" width="220" height="42" rx="10" fill="#FBF6EE" stroke="#B4472B" stroke-width="3"/>
+              <text id="olcu-yazisi" class="svg-ad" x="110" y="30" text-anchor="middle"></text>
+            </g>
+
+            <!-- Kantarın gösterdiği miktar -->
+            <g id="tarti-etiketi">
+              <rect x="450" y="232" width="220" height="42" rx="10" fill="#FBF6EE" stroke="#B4472B" stroke-width="3"/>
+              <text id="tarti-yazisi" class="svg-ad" x="560" y="262" text-anchor="middle"></text>
+            </g>
+          </svg>
+        </div>
+
+        <!-- Sonuç kartı -->
+        <div id="sonuc-karti" role="status" hidden>
+          <h3 id="sonuc-baslik"></h3>
+          <p id="sonuc-yazi"></p>
+          <blockquote><span id="sonuc-alinti"></span><cite id="sonuc-kaynak"></cite></blockquote>
+          <div class="sonuc-dugmeleri">
+            <button class="dugme ana" id="sonuc-bastan"></button>
+            <button class="dugme" id="sonuc-liste"></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sağdaki panel: şimdiki adım -->
+      <div class="panel">
+        <div class="adim-sayac" id="adim-sayac"></div>
+        <div class="ilerleme" id="ilerleme"></div>
+        <div class="adim-yazi" id="adim-yazi"></div>
+        <div class="adim-tikla" id="adim-tikla"></div>
+        <div class="kutu" id="kaynak-kutusu">
+          <div class="kutu-baslik" id="kaynak-baslik"></div>
+          <div class="kutu-yazi" id="adim-kaynak"></div>
+        </div>
+        <p class="adim-not" id="adim-not"></p>
+        <div class="bugun">
+          <div class="kutu-baslik" id="bugun-baslik"></div>
+          <p id="bugun-yazi"></p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer id="alt">
+    <span id="alt-not"></span>
+    <span id="kisayol-notu"></span>
+  </footer>
+</div>
+
+<script>
+// =====================================================================
+// Buradan sonrası programın kendisi. Yazı, malzeme ya da tarif değiştirmek
+// için dosyanın başındaki VERI bölümü yeterli.
+// =====================================================================
+
+// ===== GENEL: KÜÇÜK YARDIMCILAR =====
+
+// Kimliği (id) verilen öğeyi bulur.
+function $(kimlik) { return document.getElementById(kimlik); }
+
+// Değeri alt ve üst sınır arasında tutar.
+function sinirla(deger, enAz, enCok) { return Math.min(enCok, Math.max(enAz, deger)); }
+
+// İki rengi verilen oranda karıştırır (0 → ilk renk, 1 → ikinci renk).
+function renkKaristir(renk1, renk2, oran) {
+  const sayilar = (renk) => [1, 3, 5].map((i) => parseInt(renk.slice(i, i + 2), 16));
+  const a = sayilar(renk1);
+  const b = sayilar(renk2);
+  const karisim = a.map((deger, i) => Math.round(deger + (b[i] - deger) * oran));
+  return '#' + karisim.map((d) => d.toString(16).padStart(2, '0')).join('');
+}
+
+// Birkaç rengin ortalamasını verir.
+function renkOrtalamasi(renkler) {
+  let ortalama = renkler[0];
+  renkler.forEach((renk, i) => { if (i > 0) ortalama = renkKaristir(ortalama, renk, 1 / (i + 1)); });
+  return ortalama;
+}
+
+// Çizime (SVG) yeni bir parça eklemek için gereken ad alanı
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+// ===== GENEL: BEKLEME VE İPTAL =====
+// Bir adım canlanırken “baştan başla” denirse yarım kalan canlandırma IPTAL ile durur.
+const IPTAL = new Error('iptal');
+let tur = 0;                          // her baştan başlayışta artar
+const canliAnimasyonlar = new Set();  // süren animasyonlar (iptal edilebilsin diye)
+
+function bekle(ms, t) {
+  return new Promise((coz, reddet) => setTimeout(() => (t === tur ? coz() : reddet(IPTAL)), ms));
+}
+
+async function animasyonuBekle(animasyon, t) {
+  canliAnimasyonlar.add(animasyon);
+  try {
+    await animasyon.finished;
+  } catch (hata) {
+    throw IPTAL;
+  } finally {
+    canliAnimasyonlar.delete(animasyon);
+  }
+  if (t !== tur) throw IPTAL;
+}
+
+// ===== GENEL: EKRANA SIĞDIRMA =====
+// Sayfa 1920×1080 için çizildi; pencere hangi boyuttaysa ona orantılı sığar.
+function olcekle() {
+  const olcek = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+  $('sahne').style.setProperty('--olcek', olcek);
+}
+window.addEventListener('resize', olcekle);
+
+// Bir öğenin ortasının, 1920×1080 sahnedeki yeri
+function ogeninOrtasi(oge) {
+  const sahne = $('sahne').getBoundingClientRect();
+  const olcek = sahne.width / 1920;
+  const kutu = oge.getBoundingClientRect();
+  return {
+    x: (kutu.left + kutu.width / 2 - sahne.left) / olcek,
+    y: (kutu.top + kutu.height / 2 - sahne.top) / olcek,
+  };
+}
+
+// Mutfak çizimindeki bir noktanın (SVG koordinatı), 1920×1080 sahnedeki yeri
+function cizimNoktasi(x, y) {
+  const sahne = $('sahne').getBoundingClientRect();
+  const olcek = sahne.width / 1920;
+  const kutu = $('mutfak').getBoundingClientRect();
+  const cizimOlcegi = Math.min(kutu.width / 820, kutu.height / 820);
+  const sol = kutu.left + (kutu.width - 820 * cizimOlcegi) / 2;
+  const ust = kutu.top + (kutu.height - 820 * cizimOlcegi) / 2;
+  return {
+    x: (sol + x * cizimOlcegi - sahne.left) / olcek,
+    y: (ust + y * cizimOlcegi - sahne.top) / olcek,
+  };
+}
+
+// ===== GENEL: KLAVYE KISAYOLLARI =====
+// R: tarifi baştan yap · Esc: tarif listesine dön · F: tam ekran
+document.addEventListener('keydown', (olay) => {
+  if (olay.ctrlKey || olay.metaKey || olay.altKey || olay.repeat) return;  // Ctrl+R gibi tarayıcı kısayollarına dokunma
+  const tus = olay.key.toLowerCase();
+  if (tus === 'r' && tarif) tarifiBaslat(tarif);
+  else if (olay.key === 'Escape' && tarif) tarifListesineDon();
+  else if (tus === 'f') tamEkranDegistir();
+  else return;
+  olay.preventDefault();
+});
+
+// ===== GENEL: TAM EKRAN =====
+function tamEkranDegistir() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen().catch(() => {});
+}
+
+// ===== ÇİZİMLER: MALZEME VE TARİF SİMGELERİ =====
+// Her simge -50…50 boyutunda bir kutuya çizilir.
+const SARIMSAK_DISI =
+  '<path d="M0,-40 C5,-32 5,-28 9,-24 C30,-16 38,2 34,16 C30,32 16,38 0,38 C-16,38 -30,32 -34,16 C-38,2 -30,-16 -9,-24 C-5,-28 -5,-32 0,-40 Z" fill="#F4F0E6" stroke="#B9A88A" stroke-width="3"/>' +
+  '<path d="M0,-22 C-10,0 -10,20 -2,36 M0,-22 C10,0 10,20 2,36" fill="none" stroke="#C9B99B" stroke-width="2.5"/>';
+const SARIMSAK_DISI_SOYULMUS =
+  '<path d="M0,-24 C12,-14 14,8 5,24 C-6,16 -9,-6 0,-24 Z" fill="#FBF8F0" stroke="#D9CFB8" stroke-width="2.5"/>';
+const ARMUT =
+  '<path d="M0,-30 C10,-30 12,-16 14,-8 C30,4 32,36 0,38 C-32,36 -30,4 -14,-8 C-12,-16 -10,-30 0,-30 Z" fill="#C9B84A"/>' +
+  '<path d="M0,-30 L4,-42" stroke="#6E4A2F" stroke-width="4" stroke-linecap="round"/>' +
+  '<path d="M5,-38 C14,-46 24,-42 26,-36 C18,-32 10,-34 5,-38 Z" fill="#5E7A45"/>' +
+  '<ellipse cx="-10" cy="10" rx="6" ry="12" fill="#E2D36A" opacity="0.7"/>';
+const HURMA =
+  '<g transform="translate(-12 -2) rotate(-25)"><ellipse rx="18" ry="36" fill="#6B3A22"/><ellipse cx="-6" cy="-10" rx="5" ry="14" fill="#8E5634"/></g>' +
+  '<g transform="translate(20 10) rotate(20)"><ellipse rx="15" ry="30" fill="#5A2F1C"/><ellipse cx="-5" cy="-8" rx="4" ry="11" fill="#7E4A2C"/></g>';
+
+const IKONLAR = {
+  // --- Malzemeler ---
+  peynir:
+    '<ellipse cx="0" cy="22" rx="42" ry="12" fill="#B4472B"/><ellipse cx="0" cy="18" rx="36" ry="9" fill="#C9603F"/>' +
+    '<path d="M-30,18 C-32,-4 -16,-22 2,-22 C20,-22 34,-6 30,18 Z" fill="#F6F1E4" stroke="#D8CCB4" stroke-width="2"/>' +
+    '<g fill="#E4D9C2"><circle cx="-10" cy="-4" r="3"/><circle cx="8" cy="-10" r="2.5"/><circle cx="14" cy="4" r="3"/><circle cx="-4" cy="8" r="2.5"/></g>',
+  un:
+    '<path d="M-32,-2 C-26,-30 26,-30 32,-2 Z" fill="#F7F2E6"/>' +
+    '<path d="M-14,-18 C-6,-22 6,-22 12,-18" stroke="#E4DCC8" stroke-width="2" fill="none"/>' +
+    '<path d="M-40,-4 H40 C38,22 22,34 0,34 C-22,34 -38,22 -40,-4 Z" fill="#A97E55"/>' +
+    '<rect x="-42" y="-8" width="84" height="8" rx="4" fill="#8B5E3C"/>',
+  yumurta:
+    '<ellipse cx="-12" cy="6" rx="20" ry="27" fill="#F4ECDF" stroke="#C9B99B" stroke-width="3"/>' +
+    '<ellipse cx="16" cy="10" rx="18" ry="24" fill="#EAD9B8" stroke="#C9B99B" stroke-width="3"/>',
+  defne:
+    '<path d="M-36,22 C-24,-6 0,-28 30,-36 C22,-6 -4,16 -36,22 Z" fill="#5E7A45"/>' +
+    '<path d="M-36,22 C-10,0 10,-16 30,-36" stroke="#3F5A2E" stroke-width="2" fill="none"/>' +
+    '<path d="M-20,36 C0,14 22,0 42,-4 C30,20 8,32 -20,36 Z" fill="#6E8B52"/>' +
+    '<path d="M-20,36 C4,20 22,8 42,-4" stroke="#4E6B3A" stroke-width="2" fill="none"/>',
+  sarimsak:
+    `<g transform="translate(-16 8) scale(0.78)">${SARIMSAK_DISI}</g>` +
+    `<g transform="translate(14 2) scale(0.9)">${SARIMSAK_DISI}</g>`,
+  sarimsakSoyulmus:
+    `<g transform="translate(-24 6) rotate(-25)">${SARIMSAK_DISI_SOYULMUS}</g>` +
+    `<g transform="translate(-8 0) rotate(-8)">${SARIMSAK_DISI_SOYULMUS}</g>` +
+    `<g transform="translate(8 2) rotate(10)">${SARIMSAK_DISI_SOYULMUS}</g>` +
+    `<g transform="translate(24 8) rotate(28)">${SARIMSAK_DISI_SOYULMUS}</g>`,
+  tuz:
+    '<path d="M-30,-2 C-22,-26 22,-26 30,-2 Z" fill="#E6E2DA"/>' +
+    '<g fill="#B5AFA4"><circle cx="-10" cy="-12" r="2.5"/><circle cx="6" cy="-16" r="2.5"/><circle cx="14" cy="-8" r="2.5"/><circle cx="-18" cy="-5" r="2.5"/><circle cx="0" cy="-6" r="2.5"/></g>' +
+    '<path d="M-40,-4 H40 C38,22 22,34 0,34 C-22,34 -38,22 -40,-4 Z" fill="#B4472B"/>' +
+    '<rect x="-42" y="-8" width="84" height="8" rx="4" fill="#9A3B22"/>',
+  sertPeynir:
+    '<path d="M44,-12 L28,-26 L28,2 L44,16 Z" fill="#C9A860"/>' +
+    '<path d="M-42,2 L44,-12 L44,16 L-42,26 Z" fill="#E2CD8E"/>' +
+    '<path d="M-42,2 L28,-26 L44,-12 Z" fill="#F2E3B6"/>',
+  maydanoz:
+    '<g stroke="#2F5E22" stroke-width="4" stroke-linecap="round" fill="none"><path d="M0,44 L0,0"/><path d="M0,14 L-22,-12"/><path d="M0,8 L22,-16"/></g>' +
+    '<g fill="#3F7A2E"><circle cx="0" cy="-10" r="13"/><circle cx="-24" cy="-20" r="13"/><circle cx="24" cy="-24" r="13"/><circle cx="-10" cy="-30" r="10"/><circle cx="12" cy="-36" r="10"/></g>',
+  sedefotu:
+    '<g stroke="#5E6B4E" stroke-width="3.5" stroke-linecap="round" fill="none"><path d="M0,44 L0,-30"/><path d="M0,12 L-22,-4"/><path d="M0,-2 L20,-18"/></g>' +
+    '<g fill="#8A9A78"><ellipse cx="0" cy="-36" rx="7" ry="11"/><ellipse cx="-9" cy="-20" rx="6" ry="10" transform="rotate(-35 -9 -20)"/><ellipse cx="9" cy="-6" rx="6" ry="10" transform="rotate(35 9 -6)"/>' +
+    '<ellipse cx="-26" cy="-8" rx="6" ry="10" transform="rotate(-55 -26 -8)"/><ellipse cx="-16" cy="6" rx="6" ry="10" transform="rotate(-20 -16 6)"/><ellipse cx="24" cy="-24" rx="6" ry="10" transform="rotate(45 24 -24)"/><ellipse cx="-8" cy="22" rx="6" ry="10" transform="rotate(-30 -8 22)"/></g>',
+  kisnis:
+    '<g stroke="#3F6E26" stroke-width="3.5" stroke-linecap="round" fill="none"><path d="M0,44 C0,20 -4,4 -20,-14"/><path d="M0,44 C2,16 6,0 4,-26"/><path d="M0,44 C4,24 14,8 26,-6"/></g>' +
+    '<g fill="#5E9A3A"><circle cx="-28" cy="-20" r="8"/><circle cx="-20" cy="-28" r="8"/><circle cx="-15" cy="-17" r="8"/>' +
+    '<circle cx="-2" cy="-32" r="8"/><circle cx="6" cy="-39" r="8"/><circle cx="10" cy="-28" r="8"/>' +
+    '<circle cx="24" cy="-14" r="8"/><circle cx="33" cy="-16" r="8"/><circle cx="30" cy="-5" r="8"/></g>',
+  zeytinyagi:
+    '<path d="M14,-14 C32,-14 32,8 18,12" fill="none" stroke="#9A3B22" stroke-width="6"/>' +
+    '<path d="M-14,-30 H14 L12,-18 C30,-8 32,20 18,36 H-18 C-32,20 -30,-8 -12,-18 Z" fill="#B4472B"/>' +
+    '<rect x="-17" y="-36" width="34" height="8" rx="4" fill="#9A3B22"/>' +
+    '<path d="M-27,2 C-10,8 10,8 27,2 L26,13 C10,19 -10,19 -26,13 Z" fill="#E2B43C"/>',
+  sirke:
+    '<path d="M-8,-22 C-24,-24 -24,-6 -14,-4 M8,-22 C24,-24 24,-6 14,-4" stroke="#6B3A30" stroke-width="5" fill="none"/>' +
+    '<path d="M-8,-34 H8 V-24 C26,-16 28,10 14,28 L0,42 L-14,28 C-28,10 -26,-16 -8,-24 Z" fill="#8A4A3A"/>' +
+    '<rect x="-10" y="-39" width="20" height="7" rx="3" fill="#6B3A30"/>' +
+    '<path d="M-22,-2 C-8,4 8,4 22,-2 L20,8 C8,13 -8,13 -20,8 Z" fill="#4A2622"/>',
+  armut: ARMUT,
+  hurma: HURMA,
+  ceviz:
+    '<circle r="34" fill="#A87A4A"/>' +
+    '<path d="M0,-34 C-8,-12 8,12 0,34" stroke="#7A5530" stroke-width="4" fill="none"/>' +
+    '<path d="M-20,-18 C-12,-10 -24,0 -14,8 M18,-20 C10,-8 22,0 14,12 M-18,16 C-10,20 -16,26 -8,28" stroke="#8C6238" stroke-width="3" fill="none" stroke-linecap="round"/>',
+  camfistigi:
+    '<g fill="#EAD7A6" stroke="#C4AE78" stroke-width="2">' +
+    '<ellipse cx="-18" cy="-10" rx="7" ry="14" transform="rotate(-30 -18 -10)"/><ellipse cx="4" cy="-16" rx="7" ry="14" transform="rotate(10 4 -16)"/>' +
+    '<ellipse cx="22" cy="-2" rx="7" ry="14" transform="rotate(40 22 -2)"/><ellipse cx="-10" cy="14" rx="7" ry="14" transform="rotate(-60 -10 14)"/>' +
+    '<ellipse cx="12" cy="20" rx="7" ry="14" transform="rotate(20 12 20)"/></g>',
+  karabiber:
+    '<path d="M-30,-2 C-22,-24 22,-24 30,-2 Z" fill="#3A2A20"/>' +
+    '<g fill="#1E1510"><circle cx="-12" cy="-10" r="5"/><circle cx="2" cy="-15" r="5"/><circle cx="14" cy="-8" r="5"/><circle cx="-2" cy="-4" r="5"/></g>' +
+    '<path d="M-40,-4 H40 C38,22 22,34 0,34 C-22,34 -38,22 -40,-4 Z" fill="#8B5E3C"/>' +
+    '<rect x="-42" y="-8" width="84" height="8" rx="4" fill="#6E4A2F"/>',
+  kimyon:
+    '<ellipse cx="0" cy="18" rx="42" ry="14" fill="#B4472B"/><ellipse cx="0" cy="14" rx="36" ry="10" fill="#C9603F"/>' +
+    '<g fill="#8A6A3A"><ellipse cx="-20" cy="4" rx="2.5" ry="7" transform="rotate(30 -20 4)"/><ellipse cx="-8" cy="0" rx="2.5" ry="7" transform="rotate(-20 -8 0)"/>' +
+    '<ellipse cx="6" cy="2" rx="2.5" ry="7" transform="rotate(40 6 2)"/><ellipse cx="18" cy="6" rx="2.5" ry="7" transform="rotate(-35 18 6)"/>' +
+    '<ellipse cx="-2" cy="10" rx="2.5" ry="7" transform="rotate(70 -2 10)"/><ellipse cx="12" cy="-4" rx="2.5" ry="7" transform="rotate(10 12 -4)"/>' +
+    '<ellipse cx="-14" cy="-6" rx="2.5" ry="7" transform="rotate(60 -14 -6)"/><ellipse cx="26" cy="-2" rx="2.5" ry="7" transform="rotate(20 26 -2)"/></g>',
+  bal:
+    '<path d="M-28,-14 C-38,10 -30,34 0,36 C30,34 38,10 28,-14 Z" fill="#B4472B"/>' +
+    '<rect x="-30" y="-22" width="60" height="10" rx="5" fill="#9A3B22"/>' +
+    '<path d="M-30,-14 H30 V-8 C24,-8 22,4 18,4 C14,4 14,-6 8,-6 C4,-6 2,10 -4,10 C-10,10 -8,-6 -16,-6 C-22,-6 -22,0 -30,-2 Z" fill="#E2A72C"/>',
+  passum:
+    '<path d="M-8,-22 C-24,-24 -24,-6 -14,-4 M8,-22 C24,-24 24,-6 14,-4" stroke="#9A3B22" stroke-width="5" fill="none"/>' +
+    '<path d="M-8,-34 H8 V-24 C26,-16 28,10 14,28 L0,42 L-14,28 C-28,10 -26,-16 -8,-24 Z" fill="#B4472B"/>' +
+    '<rect x="-10" y="-39" width="20" height="7" rx="3" fill="#9A3B22"/>' +
+    '<path d="M-22,-2 C-8,4 8,4 22,-2 L20,8 C8,13 -8,13 -20,8 Z" fill="#5C2340"/>',
+  liquamen:
+    '<path d="M-10,-36 H10 V-26 C30,-18 32,12 14,30 L0,42 L-14,30 C-32,12 -30,-18 -10,-26 Z" fill="#A85A3A"/>' +
+    '<rect x="-12" y="-40" width="24" height="7" rx="3" fill="#7A3E28"/>' +
+    '<path d="M-16,0 C-8,-10 8,-10 14,0 C8,10 -8,10 -16,0 Z M14,0 L24,-8 L24,8 Z" fill="#F4ECDF"/>' +
+    '<circle cx="-8" cy="-2" r="2" fill="#2A1E17"/>',
+  kavilca:
+    '<line x1="18" y1="-6" x2="34" y2="-44" stroke="#B08A48" stroke-width="3" stroke-linecap="round"/>' +
+    '<g fill="#C9A860"><ellipse cx="30" cy="-38" rx="4" ry="7" transform="rotate(22 30 -38)"/><ellipse cx="26" cy="-28" rx="4" ry="7" transform="rotate(22 26 -28)"/>' +
+    '<ellipse cx="36" cy="-30" rx="4" ry="7" transform="rotate(22 36 -30)"/><ellipse cx="32" cy="-20" rx="4" ry="7" transform="rotate(22 32 -20)"/></g>' +
+    '<path d="M-32,-2 C-26,-30 26,-30 32,-2 Z" fill="#E3D3B0"/>' +
+    '<path d="M-40,-4 H40 C38,22 22,34 0,34 C-22,34 -38,22 -40,-4 Z" fill="#A97E55"/>' +
+    '<rect x="-42" y="-8" width="84" height="8" rx="4" fill="#8B5E3C"/>',
+  domuzYagi:
+    '<path d="M-30,-10 C-38,10 -30,34 0,36 C30,34 38,10 30,-10 Z" fill="#B4472B"/>' +
+    '<path d="M-28,-14 C-24,-34 24,-34 28,-14 Z" fill="#F4EEDF" stroke="#D8CCB4" stroke-width="2"/>' +
+    '<rect x="-32" y="-16" width="64" height="9" rx="4" fill="#9A3B22"/>',
+  hashas:
+    '<line x1="-14" y1="10" x2="-18" y2="40" stroke="#6E7A5A" stroke-width="4" stroke-linecap="round"/>' +
+    '<ellipse cx="-14" cy="-8" rx="16" ry="19" fill="#9AA58A"/>' +
+    '<path d="M-28,-24 L-14,-32 L0,-24 L-14,-20 Z" fill="#6E7A5A"/>' +
+    '<g fill="#2A1E17"><circle cx="18" cy="14" r="2"/><circle cx="24" cy="11" r="2"/><circle cx="30" cy="13" r="2"/><circle cx="36" cy="14" r="2"/><circle cx="21" cy="17" r="2"/><circle cx="33" cy="17" r="2"/></g>' +
+    '<path d="M8,16 H44 C42,30 34,36 26,36 C18,36 10,30 8,16 Z" fill="#B4472B"/>',
+  et:
+    '<path d="M-36,16 C-44,-2 -30,-26 -4,-28 C22,-30 42,-14 40,8 C38,24 14,30 -8,28 C-24,27 -32,24 -36,16 Z" fill="#B5524A"/>' +
+    '<path d="M-22,4 C-8,-8 14,-10 28,-2" stroke="#E8C4B0" stroke-width="4" fill="none"/>' +
+    '<path d="M-26,16 C-12,8 12,8 26,14" stroke="#E8C4B0" stroke-width="3" fill="none"/>',
+  ekmek:
+    '<path d="M-40,18 C-42,-8 -22,-26 0,-26 C22,-26 42,-8 40,18 Z" fill="#E9D6A8"/>' +
+    '<path d="M-20,-14 L-14,-4 M-2,-20 L4,-8 M16,-14 L22,-4" stroke="#C9AE78" stroke-width="3" stroke-linecap="round"/>' +
+    '<rect x="-42" y="16" width="84" height="8" rx="4" fill="#D6BE8A"/>',
+  sarap:
+    '<path d="M-6,-30 C-18,-32 -18,-18 -12,-16 M6,-30 C18,-32 18,-18 12,-16" stroke="#9A3B22" stroke-width="4" fill="none"/>' +
+    '<path d="M-6,-40 H6 V-30 C18,-24 20,4 10,24 L0,44 L-10,24 C-20,4 -18,-24 -6,-30 Z" fill="#B4472B"/>' +
+    '<rect x="-8" y="-44" width="16" height="6" rx="3" fill="#9A3B22"/>' +
+    '<path d="M-15,-4 C-6,0 6,0 15,-4 L14,6 C6,9 -6,9 -14,6 Z" fill="#6B1E2A"/>',
+  mersin:
+    '<g fill="#5E7A45"><ellipse cx="-18" cy="-18" rx="7" ry="14" transform="rotate(-40 -18 -18)"/><ellipse cx="20" cy="-20" rx="7" ry="14" transform="rotate(40 20 -20)"/></g>' +
+    '<line x1="0" y1="-30" x2="0" y2="10" stroke="#4E6B3A" stroke-width="3"/>' +
+    '<g fill="#3A2E5A"><circle cx="-10" cy="10" r="9"/><circle cx="8" cy="14" r="9"/><circle cx="-2" cy="26" r="9"/><circle cx="16" cy="28" r="8"/></g>' +
+    '<g fill="#FBF6EE" opacity="0.35"><circle cx="-13" cy="7" r="2.5"/><circle cx="5" cy="11" r="2.5"/></g>',
+  gomlek:
+    '<ellipse cx="0" cy="0" rx="40" ry="28" fill="#F4ECDF" stroke="#D8CCB4" stroke-width="2"/>' +
+    '<g stroke="#D8CCB4" stroke-width="2" fill="none"><path d="M-34,-10 C-16,-2 16,-2 34,-10"/><path d="M-36,6 C-16,14 16,14 36,6"/>' +
+    '<path d="M-20,-24 C-14,0 -14,10 -20,24"/><path d="M0,-28 C6,0 6,10 0,28"/><path d="M20,-24 C14,0 14,10 20,24"/></g>',
+  caroenum:
+    '<path d="M-28,-14 C-38,10 -30,34 0,36 C30,34 38,10 28,-14 Z" fill="#B4472B"/>' +
+    '<rect x="-30" y="-22" width="60" height="10" rx="5" fill="#9A3B22"/>' +
+    '<path d="M-30,-14 H30 V-8 C24,-8 22,4 18,4 C14,4 14,-6 8,-6 C4,-6 2,10 -4,10 C-10,10 -8,-6 -16,-6 C-22,-6 -22,0 -30,-2 Z" fill="#5A1F2A"/>',
+  damlaSakizi:
+    '<g fill="#EFE3B0" stroke="#CDBF84" stroke-width="2"><path d="M-14,-20 C-6,-8 -4,4 -14,8 C-24,4 -22,-8 -14,-20 Z"/><path d="M10,-14 C18,-2 20,10 10,14 C0,10 2,-2 10,-14 Z"/>' +
+    '<path d="M-2,8 C6,20 8,30 -2,34 C-12,30 -10,20 -2,8 Z"/><path d="M22,14 C28,22 28,30 22,32 C16,30 16,22 22,14 Z"/></g>',
+  sumbul:
+    '<g stroke="#8B5E3C" stroke-width="3" stroke-linecap="round"><line x1="-6" y1="-30" x2="-14" y2="34"/><line x1="0" y1="-30" x2="0" y2="36"/><line x1="6" y1="-30" x2="14" y2="34"/>' +
+    '<line x1="-3" y1="-30" x2="-24" y2="28"/><line x1="3" y1="-30" x2="24" y2="28"/></g>' +
+    '<ellipse cx="0" cy="-30" rx="14" ry="10" fill="#6E4A2F"/>' +
+    '<g stroke="#A97E55" stroke-width="2"><line x1="-8" y1="-38" x2="-12" y2="-44"/><line x1="0" y1="-40" x2="0" y2="-46"/><line x1="8" y1="-38" x2="12" y2="-44"/></g>',
+  safran:
+    '<g stroke="#D9622B" stroke-width="3" stroke-linecap="round"><line x1="-16" y1="-6" x2="-6" y2="-30"/><line x1="-4" y1="-4" x2="2" y2="-32"/><line x1="8" y1="-6" x2="16" y2="-28"/>' +
+    '<line x1="-10" y1="-4" x2="-20" y2="-24"/><line x1="12" y1="-4" x2="24" y2="-20"/></g>' +
+    '<path d="M-36,-4 H36 C34,20 20,30 0,30 C-20,30 -34,20 -36,-4 Z" fill="#E8DCC7" stroke="#C9B99B" stroke-width="2"/>',
+  hurmaCekirdegi:
+    '<g fill="#4A2A1A"><ellipse cx="-16" cy="-6" rx="7" ry="16" transform="rotate(-20 -16 -6)"/><ellipse cx="6" cy="-10" rx="7" ry="16" transform="rotate(15 6 -10)"/>' +
+    '<ellipse cx="20" cy="12" rx="7" ry="16" transform="rotate(50 20 12)"/><ellipse cx="-6" cy="18" rx="7" ry="16" transform="rotate(-70 -6 18)"/></g>' +
+    '<g stroke="#2A1E17" stroke-width="2"><line x1="-18" y1="-18" x2="-14" y2="6"/><line x1="4" y1="-22" x2="8" y2="2"/></g>',
+  komur:
+    '<g fill="#2A1E17"><path d="M-30,10 L-20,-12 L-4,-8 L-8,14 Z"/><path d="M0,16 L4,-14 L22,-10 L26,12 Z"/><path d="M-18,30 L-10,16 L8,20 L4,34 Z"/></g>' +
+    '<g fill="#4A3A2E"><path d="M-20,-12 L-4,-8 L-10,-2 Z"/><path d="M4,-14 L22,-10 L14,-6 Z"/></g>',
+
+  // --- Tarif kartları ---
+  tarifMoretum:
+    '<path d="M-44,0 C-42,22 -20,32 0,32 C20,32 42,22 44,0 Z" fill="#9A3B22"/>' +
+    '<ellipse cx="0" cy="0" rx="44" ry="20" fill="#B4472B"/>' +
+    '<ellipse cx="0" cy="1" rx="35" ry="14" fill="#CBC796"/>' +
+    '<g fill="#3F7A2E"><circle cx="-12" cy="0" r="3"/><circle cx="8" cy="-4" r="3"/><circle cx="16" cy="4" r="2.5"/><circle cx="-2" cy="6" r="2.5"/></g>' +
+    '<line x1="10" y1="-2" x2="34" y2="-40" stroke="#8B5E3C" stroke-width="8" stroke-linecap="round"/>',
+  tarifPatina:
+    '<ellipse cx="0" cy="24" rx="46" ry="14" fill="#9A3B22"/><ellipse cx="0" cy="20" rx="42" ry="10" fill="#E8C77A"/>' +
+    `<g transform="translate(0 -8) scale(0.62)">${ARMUT}</g>`,
+  tarifIsicia:
+    '<ellipse cx="-16" cy="8" rx="24" ry="18" fill="#8E5634"/><ellipse cx="18" cy="12" rx="22" ry="16" fill="#7A4A2C"/>' +
+    '<g stroke="#F4ECDF" stroke-width="1.5" fill="none" opacity="0.7"><path d="M-36,4 C-24,-6 -8,-6 4,4"/><path d="M-34,14 C-20,6 -6,8 6,16"/><path d="M0,8 C12,0 26,0 38,10"/><path d="M2,20 C14,14 28,16 38,22"/></g>',
+  tarifLibum:
+    '<ellipse cx="-22" cy="18" rx="28" ry="8" fill="#5E7A45" transform="rotate(-8 -22 18)"/>' +
+    '<ellipse cx="22" cy="18" rx="28" ry="8" fill="#6E8B52" transform="rotate(8 22 18)"/>' +
+    '<path d="M-38,16 C-38,-10 -20,-26 0,-26 C20,-26 38,-10 38,16 Z" fill="#C98F4A"/>' +
+    '<path d="M-24,-6 C-12,-14 12,-14 24,-6" stroke="#E0B070" stroke-width="3" fill="none"/>',
+  tarifGlobi:
+    '<circle cx="-18" cy="10" r="17" fill="#C98F3E"/><circle cx="17" cy="12" r="17" fill="#BF8436"/><circle cx="0" cy="-14" r="17" fill="#D39A48"/>' +
+    '<g fill="#E2A72C" opacity="0.55"><ellipse cx="-22" cy="4" rx="7" ry="4"/><ellipse cx="12" cy="6" rx="7" ry="4"/><ellipse cx="-4" cy="-20" rx="7" ry="4"/></g>' +
+    '<g fill="#2A1E17"><circle cx="-12" cy="14" r="1.6"/><circle cx="-22" cy="16" r="1.6"/><circle cx="20" cy="18" r="1.6"/><circle cx="10" cy="14" r="1.6"/><circle cx="4" cy="-8" r="1.6"/><circle cx="-6" cy="-12" r="1.6"/><circle cx="24" cy="8" r="1.6"/></g>',
+  tarifDulcia:
+    '<ellipse cx="0" cy="36" rx="40" ry="8" fill="#E2A72C" opacity="0.8"/>' + HURMA,
+  tarifConditum:
+    '<path d="M-30,-14 C-44,-14 -44,4 -28,2 M30,-14 C44,-14 44,4 28,2" stroke="#9C7A3C" stroke-width="4" fill="none"/>' +
+    '<path d="M-30,-20 H30 C30,6 18,18 0,18 C-18,18 -30,6 -30,-20 Z" fill="#9C7A3C"/>' +
+    '<ellipse cx="0" cy="-20" rx="30" ry="7" fill="#6B2E3A"/>' +
+    '<rect x="-4" y="18" width="8" height="12" fill="#9C7A3C"/><ellipse cx="0" cy="32" rx="18" ry="5" fill="#9C7A3C"/>',
+};
+
+// Simgeyi bir <svg> olarak verir; simgesi olmayan malzeme bej bir daire olarak görünür.
+function svgIkon(kimlik) {
+  const cizim = IKONLAR[kimlik] || '<circle r="32" fill="#C9B99B" stroke="#4A3A2E" stroke-width="3"/>';
+  return `<svg viewBox="-50 -50 100 100" aria-hidden="true">${cizim}</svg>`;
+}
+
+// Soyulunca başka simgeye dönen malzemeler
+const SOYULMUS_IKON = { sarimsak: 'sarimsakSoyulmus' };
+
+// Hazırlanan yemeğin parçaları. Her parça tabanı y=0 olacak şekilde çizilir; “araliklar” parçaların yan yana yerleridir.
+// “durum” sınıfı olan kısımlar yalnızca o hal gelince görünür (ör. çekirdek çıkınca yarık, tuz serpilince tuz).
+const PARCALAR = {
+  somun: {
+    araliklar: [0],
+    cizim: '<path class="hamur" d="M-48,-4 C-48,-30 -26,-46 0,-46 C26,-46 48,-30 48,-4 Z" stroke="#4A3A2E" stroke-opacity="0.3" stroke-width="2"/>',
+  },
+  top: {
+    araliklar: [0],
+    cizim: '<circle class="hamur" cx="0" cy="-30" r="30" stroke="#4A3A2E" stroke-opacity="0.3" stroke-width="2"/>' +
+      '<ellipse cx="-10" cy="-42" rx="9" ry="6" fill="#FBF6EE" opacity="0.4"/>',
+  },
+  armut: {
+    araliklar: [-25, 25],
+    cizim: '<path class="armut-govde" d="M0,-52 C7,-52 9,-42 10,-36 C22,-28 23,-4 0,0 C-23,-4 -22,-28 -10,-36 C-9,-42 -7,-52 0,-52 Z" stroke="#8E7A3A" stroke-opacity="0.4" stroke-width="1.5"/>' +
+      '<g class="sap"><path d="M0,-52 L3,-60" stroke="#6E4A2F" stroke-width="3" stroke-linecap="round"/><path d="M3,-58 C9,-63 16,-60 17,-56 C12,-53 7,-55 3,-58 Z" fill="#5E7A45"/></g>' +
+      '<ellipse class="durum oz" cx="0" cy="-18" rx="6" ry="11" fill="#9C8440"/>' +
+      '<ellipse cx="-8" cy="-16" rx="3.5" ry="8" fill="#FBF6EE" opacity="0.25"/>',
+  },
+  hurma: {
+    araliklar: [-34, 0, 34],
+    cizim: '<ellipse cx="0" cy="-7" rx="16" ry="7" fill="#6B3A22"/>' +
+      '<ellipse cx="-5" cy="-10" rx="7" ry="2" fill="#8E5634"/>' +
+      '<path class="durum yarik" d="M-10,-11 Q0,-14 10,-11" stroke="#2A140C" stroke-width="2.5" fill="none"/>' +
+      '<ellipse class="durum dolgu" cx="0" cy="-12" rx="9" ry="2.6"/>' +
+      '<ellipse class="durum bal-kaplama" cx="0" cy="-7" rx="17" ry="8" fill="#E2A72C" opacity="0.45"/>' +
+      '<g class="durum tuz" fill="#FBF8F0"><circle cx="-10" cy="-8" r="1.4"/><circle cx="-3" cy="-4" r="1.4"/><circle cx="5" cy="-6" r="1.4"/><circle cx="11" cy="-9" r="1.4"/><circle cx="1" cy="-11" r="1.2"/></g>',
+  },
+  globi: {
+    araliklar: [-36, -12, 12, 36],
+    cizim: '<circle class="hamur" cx="0" cy="-13" r="13" stroke="#4A3A2E" stroke-opacity="0.25" stroke-width="1.5"/>' +
+      '<ellipse class="durum parlak" cx="-3" cy="-17" rx="8" ry="5" fill="#F2C35A" opacity="0.6"/>' +
+      '<g class="durum hashas" fill="#2A1E17"><circle cx="-5" cy="-19" r="1.3"/><circle cx="3" cy="-21" r="1.3"/><circle cx="6" cy="-12" r="1.3"/><circle cx="-7" cy="-9" r="1.3"/><circle cx="0" cy="-14" r="1.3"/><circle cx="8" cy="-17" r="1.2"/></g>',
+  },
+  et: {
+    araliklar: [0],
+    cizim: '<g class="parca-butun"><path d="M-40,0 C-44,-14 -30,-26 -8,-26 C14,-28 38,-22 42,-8 C44,0 30,2 0,2 C-24,2 -38,2 -40,0 Z" fill="#B5524A"/>' +
+      '<path d="M-30,-10 C-14,-16 10,-18 30,-12" stroke="#E8C4B0" stroke-width="3" fill="none"/></g>' +
+      '<g class="durum kiyma" fill="#B5524A" stroke="#8E3A34" stroke-width="1"><circle cx="-26" cy="-6" r="6"/><circle cx="-14" cy="-10" r="7"/><circle cx="0" cy="-7" r="6"/>' +
+      '<circle cx="13" cy="-11" r="7"/><circle cx="26" cy="-6" r="6"/><circle cx="-6" cy="-16" r="5"/><circle cx="8" cy="-18" r="5"/></g>',
+  },
+  kofte: {
+    araliklar: [-34, 0, 34],
+    cizim: '<ellipse class="hamur" cx="0" cy="-9" rx="15" ry="9" stroke="#4A3A2E" stroke-opacity="0.3" stroke-width="1.5"/>' +
+      '<g class="durum fistik" fill="#EAD7A6"><ellipse cx="-5" cy="-11" rx="2.2" ry="3.5"/><ellipse cx="4" cy="-9" rx="2.2" ry="3.5"/></g>' +
+      '<g class="durum biber" fill="#2A1E17"><circle cx="0" cy="-13" r="1.3"/><circle cx="7" cy="-12" r="1.3"/><circle cx="-8" cy="-8" r="1.3"/></g>' +
+      '<g class="durum ag" stroke="#FBF6EE" stroke-width="1.3" fill="none" opacity="0.9"><path d="M-14,-9 C-8,-16 8,-16 14,-9"/><path d="M-12,-5 C-6,-12 6,-12 12,-5"/>' +
+      '<path d="M-8,-17 L-2,-1 M0,-18 L6,-1 M8,-16 L12,-4 M-12,-14 L-8,-2"/></g>' +
+      '<ellipse class="durum sos" cx="0" cy="-12" rx="13" ry="5" fill="#5A1F2A" opacity="0.7"/>',
+  },
+  kadeh: {
+    araliklar: [0],
+    cizim: '<path d="M-22,-44 H22 C22,-26 12,-16 0,-16 C-12,-16 -22,-26 -22,-44 Z" fill="#9C7A3C"/>' +
+      '<ellipse class="durum kadeh-sarap" cx="0" cy="-44" rx="21" ry="4.5"/>' +
+      '<ellipse cx="0" cy="-44" rx="22" ry="5" fill="none" stroke="#7A5E2C" stroke-width="2"/>' +
+      '<rect x="-3" y="-17" width="6" height="13" fill="#9C7A3C"/><ellipse cx="0" cy="-3" rx="13" ry="4" fill="#9C7A3C"/>',
+  },
+};
+
+// Yemeğin parçalarını çizer (ör. üç hurma)
+function urunuKur(tur) {
+  urunTuru = tur;
+  const parca = PARCALAR[tur];
+  // Parçaların arasına tıklanınca da yemeğe tıklanmış sayılsın diye görünmez bir alan
+  const sol = Math.min(...parca.araliklar) - 26;
+  const genislik = Math.max(...parca.araliklar) + 26 - sol;
+  $('urun-ogeler').innerHTML = `<rect x="${sol}" y="-62" width="${genislik}" height="62" fill="transparent"/>` +
+    parca.araliklar.map((x) => `<g transform="translate(${x} 0)">${parca.cizim}</g>`).join('');
+}
+
+// ===== EKRAN 1: TARİF SEÇİMİ =====
+function secimEkraniniKur() {
+  const S = VERI.secim;
+  $('secim-baslik').innerHTML = S.baslik;
+  $('secim-not').innerHTML = S.not;
+  VERI.tarifler.forEach((secilen) => {
+    const kart = document.createElement('button');
+    kart.className = 'tarif-karti';
+    kart.disabled = !secilen.hazir;
+    kart.innerHTML =
+      (secilen.hazir ? '' : `<span class="rozet">${S.yakinda}</span>`) +
+      svgIkon(secilen.ikon) +
+      `<span class="tarif-adi">${secilen.ad}</span>` +
+      `<span class="tarif-alt">${secilen.altBaslik}</span>` +
+      `<span class="tarif-kaynak">${secilen.kaynak}</span>`;
+    kart.addEventListener('click', () => tarifiBaslat(secilen));
+    $('tarif-kartlari').appendChild(kart);
+  });
+}
+
+function tarifListesineDon() {
+  iptalEt();
+  tarif = null;
+  ekranlariCiz();
+}
+
+// Hangi ekranın görüneceği ve alttaki not satırı
+function ekranlariCiz() {
+  $('secim-ekrani').hidden = !!tarif;
+  $('mutfak-ekrani').hidden = !tarif;
+  $('listeye-don').hidden = !tarif;
+  $('alt-not').innerHTML = VERI.notSatiri;
+}
+
+// ===== EKRAN 2: MUTFAK =====
+
+// Mutfak çizimindeki yerler (SVG koordinatı)
+const YER = {
+  havan: { x: 520, y: 478 },        // havanın ortası
+  tahta: { x: 650, y: 512 },        // tahtanın üst yüzü
+  kenar: { x: 358, y: 452 },        // ocağın kenarı (ateşin yanındaki sıcak yüzey)
+  izgara: { x: 220, y: 406 },       // ızgaranın üstü
+  discus: { x: 760, y: 516 },       // servis tepsisi
+  kefe: { x: 560, y: 196 },         // kantarın kefesi
+  kapakAskisi: { x: 95, y: 172 },   // kil kapağın duvardaki askısı
+  koz: { x: 82, y: 432 },           // ateş
+};
+const HAVANELI_HIZI = (2 * Math.PI) / 1.2;   // havaneli 1,2 saniyede bir tur döner
+
+// Yeri değişebilen kaplar. ev: dinlenme yeri · agiz: kabın ağzının yüksekliği (tabanına göre)
+// ic: içine konan yemeğin yeri (dy) ve boyutu (olcek)
+const KAPLAR = {
+  olla:     { ev: { x: 530, y: 655 }, agiz: -62, ic: { dy: -46, olcek: 0.7 } },
+  sartago:  { ev: { x: 225, y: 164 }, agiz: -16, ic: { dy: -20, olcek: 0.8 } },
+  patina:   { ev: { x: 640, y: 655 }, agiz: -18, ic: { dy: -16, olcek: 0.8 } },
+  bakirKap: { ev: { x: 740, y: 655 }, agiz: -52, ic: { dy: -50, olcek: 0.8 } },
+};
+// Kapların konabileceği yerler
+const KAP_YERLERI = {
+  koz: { x: 82, y: 452 },
+  izgara: { x: 220, y: 406 },
+  kenar: { x: 358, y: 452 },
+  tahta: { x: 650, y: 512 },
+  discus: { x: 760, y: 518 },
+};
+// Bıçağın, çubukların ve süzgecin duvardaki yeri (altlarının ortası)
+const BICAK_UCU = { x: 426, y: 182 };
+const CUBUK_UCU = { x: 480, y: 196 };
+const SUZGEC_ALTI = { x: 340, y: 168 };
+
+let tarif = null;          // seçili tarif (tarif listesindeyken boş)
+let adimNo = 0;            // şimdiki adım
+let tiklananlar = [];      // bu adımda tıklanmış olanlar (birden çok tıklamalı adımlar için)
+let calisiyor = false;     // bir adım canlanırken yeni tıklamalar beklenir
+let havan = {};            // havandakiler: karisim (malzeme → 0…1), benekler, havaneli açısı
+let tahtadaki = null;      // tahtadaki malzeme (ör. soyulmuş sarımsak)
+let urunYeri = 'tahta';    // hazırlanan yemeğin yeri
+let kapakYeri = 'aski';    // kil kapağın yeri: 'aski' ya da yemeğin olduğu yer
+let kapYerleri = {};       // her kabın şimdiki yeri: 'ev' ya da KAP_YERLERI'nden biri
+let icerikRenkleri = {};   // kapların içindekinin şimdiki rengi
+let urunTuru = null;       // yemeğin şimdiki parçaları (ör. 'et', 'kofte')
+let sonKullanim = {};      // her malzemenin tarifte son kullanıldığı adım (raftaki ✓ için)
+let sonucZamanlayici = null;
+
+// --- Kurulum: sabit yazılar, düğmeler ve tıklamalar ---
+function mutfagiHazirla() {
+  const M = VERI.mutfak;
+  $('listeye-don').textContent = M.listeyeDon;
+  $('kaynak-baslik').textContent = M.kaynakBaslik;
+  $('bugun-baslik').textContent = M.bugunBaslik;
+  $('sonuc-bastan').textContent = M.bastan;
+  $('sonuc-liste').textContent = M.baskaTarif;
+  $('listeye-don').addEventListener('click', tarifListesineDon);
+  $('sonuc-liste').addEventListener('click', tarifListesineDon);
+  $('sonuc-bastan').addEventListener('click', () => tarifiBaslat(tarif));
+
+  // Mutfak çiziminde tıklanabilir yerler “data-hedef” ile işaretli
+  $('mutfak').addEventListener('click', (olay) => {
+    const hedef = olay.target.closest('[data-hedef]');
+    if (hedef) tiklandi(hedef.dataset.hedef);
+  });
+
+  // Havanın iç yüzeyine gömülü kum ve taş taneleri
+  const taneRenkleri = ['#7A5A42', '#A08C78', '#5E4636'];
+  for (let i = 0; i < 40; i++) {
+    const aci = Math.random() * 2 * Math.PI;
+    const uzaklik = Math.sqrt(Math.random());
+    const tane = document.createElementNS(SVG_NS, 'circle');
+    tane.setAttribute('cx', (uzaklik * 56 * Math.cos(aci)).toFixed(1));
+    tane.setAttribute('cy', (1 + uzaklik * 25 * Math.sin(aci)).toFixed(1));
+    tane.setAttribute('r', (0.8 + Math.random() * 1.2).toFixed(1));
+    tane.setAttribute('fill', taneRenkleri[i % 3]);
+    $('havan-taneler').appendChild(tane);
+  }
+}
+
+// --- Bir tarifi baştan başlat ---
+function tarifiBaslat(secilen) {
+  iptalEt();
+  tarif = secilen;
+  adimNo = 0;
+  tiklananlar = [];
+  calisiyor = false;
+  $('tarif-basligi').innerHTML = `${tarif.ad} <span class="baslik-alt">${tarif.altBaslik}</span>`;
+  $('bugun-yazi').innerHTML = tarif.bugun;
+  // Bir malzeme birden çok adımda kullanılıyorsa (ör. karabiber) rafta ancak son kullanımda ✓ alır
+  sonKullanim = {};
+  tarif.adimlar.forEach((adim, i) => adimHedefleri(adim).forEach((h) => { if (VERI.malzemeler[h]) sonKullanim[h] = i; }));
+  ekranlariCiz();
+  kileriKur();
+  mutfagiSifirla();
+  adimiCiz();
+}
+
+// Süren canlandırmaları durdurur
+function iptalEt() {
+  tur++;
+  canliAnimasyonlar.forEach((animasyon) => animasyon.cancel());
+  canliAnimasyonlar.clear();
+  document.querySelectorAll('.ucan').forEach((oge) => oge.remove());
+  $('efekt').innerHTML = '';
+  clearTimeout(sonucZamanlayici);
+}
+
+// Kiler rafı: tarifin malzemeleri, kalan yerler boş raf
+function kileriKur() {
+  const kiler = $('kiler');
+  kiler.innerHTML = '';
+  tarif.raf.forEach((kimlik) => {
+    const dugme = document.createElement('button');
+    dugme.className = 'malzeme';
+    dugme.dataset.malzeme = kimlik;
+    dugme.innerHTML = `${svgIkon(kimlik)}<span>${VERI.malzemeler[kimlik].ad}</span>`;
+    dugme.addEventListener('click', () => tiklandi(kimlik));
+    kiler.appendChild(dugme);
+  });
+  for (let i = tarif.raf.length; i < 10; i++) {
+    const bos = document.createElement('div');
+    bos.className = 'raf-bos';
+    kiler.appendChild(bos);
+  }
+}
+
+// Mutfağı ilk haline getirir (havan boş, kapak askıda, yemek yok)
+function mutfagiSifirla() {
+  const svg = $('mutfak');
+  svg.classList.add('gecissiz');
+  havan = { karisim: {}, benekler: [], aci: 0 };
+  $('havan-benekler').innerHTML = '';
+  $('havan-icerik').classList.remove('bos');
+  tahtadaki = null;
+  $('tahta-nesne').innerHTML = '';
+  const urun = $('urun');
+  urun.setAttribute('class', 'hareketli gizli');      // yemeğin bütün halleri (haşlanmış, tuzlu…) silinir
+  urun.style.removeProperty('--hamur');
+  urun.style.removeProperty('--dolgu');
+  $('urun-ogeler').innerHTML = '';
+  $('urun-yaprak').style.display = 'none';
+  urunuYerlestir('tahta');
+  kapYerleri = {};
+  Object.keys(KAPLAR).forEach((kap) => kabiYerlestir(kap, 'ev'));
+  icerikRenkleri = {};
+  document.querySelectorAll('#mutfak .icerik').forEach((icerik) => { icerik.style.display = 'none'; });
+  if (tarif.ollaSuyu) {                     // tencerede baştan su varsa
+    icerikRengiVer('olla', '#9FB4B8');
+    $('icerik-olla').style.display = '';
+  }
+  urunTuru = null;
+  $('patina-biber').style.display = 'none';
+  $('kopuk-olla').style.display = 'none';
+  $('kabarcik').style.display = 'none';
+  $('gece').setAttribute('opacity', 0);
+  $('olcu-etiketi').style.opacity = 0;
+  kapakYeri = 'aski';
+  kapagiYerlestir();
+  $('arac-testum').classList.remove('korlu');
+  $('testum-etiketi').style.opacity = 1;
+  $('buhar').style.display = 'none';
+  $('tarti-etiketi').style.opacity = 0;
+  $('sonuc-karti').hidden = true;
+  havaniCiz();
+  svg.getBoundingClientRect();     // tarayıcı yeni yerleri hemen uygulasın
+  svg.classList.remove('gecissiz');
+}
+
+// --- Tıklanacak şeyler ---
+function adimHedefleri(adim) { return [].concat(adim.tikla); }
+
+function hedefAdi(kimlik) {
+  return VERI.malzemeler[kimlik] ? VERI.malzemeler[kimlik].ad : (VERI.araclar[kimlik] || kimlik);
+}
+
+function hedefOgesi(kimlik) {
+  if (VERI.malzemeler[kimlik]) return document.querySelector(`#kiler [data-malzeme="${kimlik}"]`);
+  // Aynı şeyin iki çizimi olabilir (ör. duvardaki ve ocaktaki tava): görünen seçilir
+  const adaylar = [...document.querySelectorAll(`#mutfak [data-hedef="${kimlik}"]`)];
+  return adaylar.find((oge) => !oge.classList.contains('gizli')) || adaylar[0];
+}
+
+// Raftaki malzemeye ✓ koyar (tarifte bir daha kullanılmayacaksa)
+function kullanildiIsaretle(kimlik) {
+  if (adimNo >= (sonKullanim[kimlik] ?? 0)) {
+    const dugme = hedefOgesi(kimlik);
+    if (dugme) dugme.classList.add('kullanildi');
+  }
+}
+
+// --- Bir şeye tıklandı: doğru şeyse adımın eylemi canlanır ---
+async function tiklandi(kimlik) {
+  if (!tarif || calisiyor || adimNo >= tarif.adimlar.length) return;
+  const adim = tarif.adimlar[adimNo];
+  const hedefler = adimHedefleri(adim);
+  // Yemek bir kabın içindeyse (ör. tavadaki hurmalar) kaba tıklamak yemeğe tıklamak sayılır
+  if (!hedefler.includes(kimlik) && hedefler.includes('urun') && kimlik === urunYeri) kimlik = 'urun';
+  if (!hedefler.includes(kimlik) || tiklananlar.includes(kimlik)) return;   // başka bir şeye tıklandı: yok sayılır
+
+  const t = tur;
+  calisiyor = true;
+  tiklananlar.push(kimlik);
+  adimiCiz();
+  try {
+    await EYLEMLER[adim.eylem](adim, kimlik, t);
+  } catch (hata) {
+    if (hata === IPTAL) return;    // bu arada baştan başlandı
+    throw hata;
+  }
+  calisiyor = false;
+  const adimBitti = adim.herhangi ? tiklananlar.length > 0 : hedefler.every((h) => tiklananlar.includes(h));
+  if (adimBitti) {
+    adimNo++;
+    tiklananlar = [];
+    if (adimNo === tarif.adimlar.length) bitir();
+  }
+  adimiCiz();
+}
+
+// --- Paneli ve parlayan şeyleri çizer ---
+function adimiCiz() {
+  const M = VERI.mutfak;
+  const toplam = tarif.adimlar.length;
+  const bitti = adimNo >= toplam;
+
+  // İlerleme çubuğu: biten adımlar yeşil, şimdiki adım turuncu
+  $('ilerleme').innerHTML = tarif.adimlar
+    .map((_, i) => `<span class="${i < adimNo ? 'bitti' : i === adimNo ? 'simdi' : ''}"></span>`)
+    .join('');
+
+  document.querySelectorAll('.parla').forEach((oge) => oge.classList.remove('parla'));
+
+  if (bitti) {
+    $('adim-sayac').textContent = M.bittiBaslik;
+    $('adim-yazi').innerHTML = M.bittiYazi;
+    $('adim-tikla').innerHTML = '';
+    $('kaynak-kutusu').hidden = true;
+    $('adim-not').hidden = true;
+    return;
+  }
+
+  const adim = tarif.adimlar[adimNo];
+  const kalan = adimHedefleri(adim).filter((h) => !tiklananlar.includes(h));
+  $('adim-sayac').textContent = `${M.adim} ${adimNo + 1} / ${toplam}`;
+  $('adim-yazi').innerHTML = adim.yazi;
+  $('kaynak-kutusu').hidden = !adim.kaynak;
+  $('adim-kaynak').innerHTML = adim.kaynak || '';
+  $('adim-not').hidden = !adim.not;
+  $('adim-not').innerHTML = adim.not || '';
+
+  if (!calisiyor) {
+    $('adim-tikla').innerHTML = `${adim.herhangi ? M.birini : M.tikla} ${kalan.map(hedefAdi).join(', ')}`;
+    kalan.forEach((h) => {
+      const oge = hedefOgesi(h);
+      if (oge) oge.classList.add('parla');
+      if (h === 'urun' && KAPLAR[urunYeri]) hedefOgesi(urunYeri).classList.add('parla');   // içindeki kap da parlar
+    });
+  } else {
+    $('adim-tikla').innerHTML = '';
+  }
+}
+
+// Tarif bitti: kısa bir süre sonra sonuç kartı açılır
+function bitir() {
+  sonucZamanlayici = setTimeout(() => {
+    if (!tarif) return;
+    $('sonuc-baslik').innerHTML = tarif.sonuc.baslik;
+    $('sonuc-yazi').innerHTML = tarif.sonuc.yazi;
+    $('sonuc-alinti').innerHTML = tarif.sonuc.alinti;
+    $('sonuc-kaynak').innerHTML = tarif.sonuc.alintiKaynak;
+    $('sonuc-karti').hidden = false;
+  }, 500);
+}
+
+// --- Çizim yardımcıları ---
+
+// Bir malzeme simgesini sahnede bir noktadan ötekine uçurur; uçan simgeyi geri verir.
+async function ucur(ikon, bas, son, t, olcek = { bas: 1, son: 0.5 }) {
+  const ucan = document.createElement('div');
+  ucan.className = 'ucan';
+  ucan.innerHTML = svgIkon(ikon);
+  ucan.style.left = bas.x + 'px';
+  ucan.style.top = bas.y + 'px';
+  $('sahne').appendChild(ucan);
+  const animasyon = ucan.animate(
+    [
+      { transform: `translate(0px, 0px) scale(${olcek.bas})` },
+      { transform: `translate(${son.x - bas.x}px, ${son.y - bas.y}px) scale(${olcek.son})` },
+    ],
+    { duration: 700, easing: 'ease-in-out', fill: 'forwards' }
+  );
+  await animasyonuBekle(animasyon, t);
+  return ucan;
+}
+
+// Havandaki benekleri, macunu ve havaneliyi çizer
+function havaniCiz() {
+  const hedefRenk = tarif ? tarif.macunRengi : '#CBC796';
+  for (const benek of havan.benekler) {
+    const k = havan.karisim[benek.malzeme];
+    benek.oge.setAttribute('cx', (benek.uzaklik * 48 * Math.cos(benek.aci)).toFixed(1));
+    benek.oge.setAttribute('cy', (6 + benek.uzaklik * 19 * Math.sin(benek.aci)).toFixed(1));
+    benek.oge.setAttribute('r', (benek.boyut * (1 + 0.4 * k)).toFixed(1));
+    benek.oge.setAttribute('fill', renkKaristir(VERI.malzemeler[benek.malzeme].renk, hedefRenk, k));
+    benek.oge.setAttribute('fill-opacity', (1 - 0.9 * k).toFixed(2));
+  }
+
+  // Macun: havandakilerin ortalama rengi; karıştıkça tarifin rengine döner, malzeme arttıkça büyür
+  const icindekiler = Object.keys(havan.karisim);
+  const macun = $('havan-macun');
+  if (icindekiler.length) macun.setAttribute('fill', havanRengi());
+  macun.style.transform = `scale(${icindekiler.length ? Math.min(1, 0.4 + 0.15 * icindekiler.length) : 0})`;
+
+  // Havaneli: ucu havanın içinde küçük bir elips çizer
+  const a = havan.aci;
+  const uc = { x: 22 * Math.cos(a), y: 6 + 9 * Math.sin(a) };
+  const sap = { x: uc.x + 42 + 6 * Math.cos(a), y: uc.y - 82 + 3 * Math.sin(a) };
+  $('havaneli').setAttribute('x1', sap.x.toFixed(1));
+  $('havaneli').setAttribute('y1', sap.y.toFixed(1));
+  $('havaneli').setAttribute('x2', uc.x.toFixed(1));
+  $('havaneli').setAttribute('y2', uc.y.toFixed(1));
+  $('havaneli-bas').setAttribute('cx', uc.x.toFixed(1));
+  $('havaneli-bas').setAttribute('cy', uc.y.toFixed(1));
+}
+
+// Havandaki karışımın şimdiki rengi
+function havanRengi() {
+  const icindekiler = Object.keys(havan.karisim);
+  if (!icindekiler.length) return tarif.macunRengi;
+  const ortalamaKarisim = icindekiler.reduce((toplam, k) => toplam + havan.karisim[k], 0) / icindekiler.length;
+  const ortalamaRenk = renkOrtalamasi(icindekiler.map((k) => VERI.malzemeler[k].renk));
+  return renkKaristir(ortalamaRenk, tarif.macunRengi, ortalamaKarisim);
+}
+
+// Havana bir malzeme düşer: kendi renginde benekler
+function havanaEkle(kimlik) {
+  havan.karisim[kimlik] = 0;
+  const malzeme = VERI.malzemeler[kimlik];
+  for (let i = 0; i < (malzeme.benek || 10); i++) {
+    const daire = document.createElementNS(SVG_NS, 'circle');
+    daire.setAttribute('class', 'benek');
+    daire.style.animationDelay = (Math.random() * 0.2).toFixed(2) + 's';
+    $('havan-benekler').appendChild(daire);
+    havan.benekler.push({
+      oge: daire,
+      malzeme: kimlik,
+      aci: Math.random() * 2 * Math.PI,
+      uzaklik: 0.9 * Math.sqrt(Math.random()),   // 0 = havanın ortası, 1 = kenarı
+      boyut: 2.5 + Math.random() * 2,
+    });
+  }
+  havaniCiz();
+}
+
+// Havaneli döner, benekler karışır; karışım “hedef” değerine ulaşınca biter
+function havanDov(hedef, sure, t) {
+  const baslangicKarisim = { ...havan.karisim };
+  const baslangic = performance.now();
+  let onceki = baslangic;
+  return new Promise((coz, reddet) => {
+    const kare = (simdi) => {
+      if (t !== tur) { reddet(IPTAL); return; }
+      const fark = sinirla((simdi - onceki) / 1000, 0, 0.1);
+      onceki = simdi;
+      const oran = sinirla((simdi - baslangic) / sure, 0, 1);
+      for (const k in havan.karisim) {
+        const bas = baslangicKarisim[k] ?? 0;
+        if (bas < hedef) havan.karisim[k] = bas + (hedef - bas) * oran;
+      }
+      havan.aci += fark * HAVANELI_HIZI;
+      for (const benek of havan.benekler) benek.aci += fark * (1.2 - 0.7 * benek.uzaklik);   // ortadakiler daha hızlı döner
+      havaniCiz();
+      if (oran < 1) requestAnimationFrame(kare);
+      else coz();
+    };
+    requestAnimationFrame(kare);
+  });
+}
+
+// Tahtaya bir malzeme koyar (ör. soyulacak sarımsak)
+function tahtayaKoy(malzeme, ikon) {
+  tahtadaki = { malzeme, ikon };
+  $('tahta-nesne').innerHTML = `<g transform="translate(0 -26) scale(0.52)">${IKONLAR[ikon]}</g>`;
+}
+
+// Bir kabın şimdiki yeri (tabanının ortası)
+function kapNoktasi(kap) {
+  const yer = kapYerleri[kap] || 'ev';
+  return yer === 'ev' ? KAPLAR[kap].ev : KAP_YERLERI[yer];
+}
+
+// Bir kabı bir yere koyar ('ev' = dinlenme yeri)
+function kabiYerlestir(kap, yer) {
+  kapYerleri[kap] = yer;
+  const nokta = kapNoktasi(kap);
+  const olcek = yer === 'discus' ? 0.8 : 1;
+  $('kap-' + kap).style.transform = `translate(${nokta.x}px, ${nokta.y}px) scale(${olcek})`;
+  if (kap === 'sartago') {
+    // Duvardaki tava (önden görünüş) ile ocaktaki tava (yandan görünüş) yer değiştirir
+    const askida = yer === 'ev';
+    $('arac-sartago').classList.toggle('gizli', !askida);
+    $('sartago-etiketi').classList.toggle('gizli', !askida);
+    $('kap-sartago').classList.toggle('gizli', askida);
+  }
+}
+
+// Yemeğin bir yerdeki konumu ve boyutu: bir kabın içi, tahta, ocağın kenarı, havan ya da servis tepsisi
+function urunNoktasi(yer) {
+  if (KAPLAR[yer]) {
+    const nokta = kapNoktasi(yer);
+    const ic = KAPLAR[yer].ic;
+    return { x: nokta.x, y: nokta.y + ic.dy, olcek: ic.olcek };
+  }
+  const nokta = YER[yer];
+  const olcek = yer === 'discus' ? 0.75 : yer === 'havan' ? 0.5 : 1;
+  return { x: nokta.x, y: nokta.y, olcek };
+}
+
+// Yemeği bir yere koyar (geçişle kayarak)
+function urunuYerlestir(yer, olcek) {
+  const nokta = urunNoktasi(yer);
+  $('urun').style.transform = `translate(${nokta.x}px, ${nokta.y}px) scale(${olcek ?? nokta.olcek})`;
+  urunYeri = yer;
+}
+
+// Yemeği bir yerde hemen belirtir (kaymadan, yavaşça görünerek)
+function urunuGoster(yer) {
+  const urun = $('urun');
+  urun.classList.add('gecissiz');
+  urunuYerlestir(yer);
+  urun.getBoundingClientRect();
+  urun.classList.remove('gecissiz');
+  urun.classList.remove('gizli');
+}
+
+// Bir malzemenin uçacağı nokta (sahne koordinatı)
+function eklemeNoktasi(kap) {
+  if (kap === 'havan') return cizimNoktasi(YER.havan.x, YER.havan.y);
+  if (kap === 'urun') {
+    const nokta = urunNoktasi(urunYeri);
+    return cizimNoktasi(nokta.x, nokta.y - 14);
+  }
+  if (KAPLAR[kap]) {
+    const nokta = kapNoktasi(kap);
+    return cizimNoktasi(nokta.x, nokta.y + KAPLAR[kap].agiz);
+  }
+  return cizimNoktasi(YER[kap].x, YER[kap].y - 20);
+}
+
+// Bir kabın içindekinin rengini değiştirir (renk yavaşça geçer)
+function icerikRengiVer(kap, renk) {
+  icerikRenkleri[kap] = renk;
+  $('icerik-' + kap).style.fill = renk;
+}
+
+// Bir kabın içine sıvı, yağ ya da baharat konur (ör. tavada bal); kapta bir şey varsa renkler karışır
+function kabaDoldur(kap, malzeme) {
+  const icerik = $('icerik-' + kap);
+  const renk = VERI.malzemeler[malzeme].renk;
+  const dolu = icerik.style.display !== 'none' && icerikRenkleri[kap];
+  icerikRengiVer(kap, dolu ? renkKaristir(icerikRenkleri[kap], renk, 0.3) : renk);
+  icerik.style.display = '';
+}
+
+// Bir kabın üstünde kısa süre ölçü yazar (ör. “6 sextarius ≈ 3 litre”)
+async function olcuGoster(yazi, kap, t) {
+  const nokta = kapNoktasi(kap);
+  const etiket = $('olcu-etiketi');
+  $('olcu-yazisi').textContent = yazi;
+  const genislik = $('olcu-yazisi').getComputedTextLength() + 36;
+  const sol = sinirla(nokta.x - genislik / 2, 10, 810 - genislik);
+  const ust = nokta.y + KAPLAR[kap].agiz - 110;
+  $('olcu-kutu').setAttribute('width', genislik);
+  $('olcu-yazisi').setAttribute('x', genislik / 2);
+  etiket.setAttribute('transform', `translate(${sol} ${ust})`);
+  etiket.style.opacity = 1;
+  try {
+    await bekle(1400, t);
+  } finally {
+    etiket.style.opacity = 0;
+  }
+}
+
+// Bir aleti iş sırasında her şeyin önüne alır; iş bitince yerine koyar
+async function oneAlarak(oge, islem) {
+  const ebeveyn = oge.parentNode;
+  const sonraki = oge.nextSibling;
+  $('mutfak').appendChild(oge);
+  try {
+    await islem();
+  } finally {
+    ebeveyn.insertBefore(oge, sonraki);
+  }
+}
+
+// Pişme, kaynama ya da kızarma süreci: buhar ve kabarcıklar çıkar, paneldeki çubuk dolar
+async function pismeSureci({ yazi, sure, nokta, kabarcik }, t) {
+  const buhar = $('buhar');
+  const kabarciklar = $('kabarcik');
+  if (nokta) {
+    buhar.setAttribute('transform', `translate(${nokta.x} ${nokta.y})`);
+    buhar.style.display = '';
+  }
+  if (kabarcik) {
+    kabarciklar.setAttribute('transform', `translate(${kabarcik.x} ${kabarcik.y})`);
+    kabarciklar.style.display = '';
+  }
+  $('adim-tikla').innerHTML = `${yazi}<div class="surec"><div id="surec-dolgu"></div></div>`;
+  const dolma = $('surec-dolgu').animate([{ width: '0%' }, { width: '100%' }], { duration: sure * 1000, fill: 'forwards' });
+  try {
+    await animasyonuBekle(dolma, t);
+  } finally {
+    buhar.style.display = 'none';
+    kabarciklar.style.display = 'none';
+  }
+}
+
+// Bir kabın ağzının üstündeki buhar ve kabarcık yerleri
+function kapAgzi(kap) {
+  const nokta = kapNoktasi(kap);
+  const agiz = nokta.y + KAPLAR[kap].agiz;
+  return { nokta: { x: nokta.x, y: agiz - 12 }, kabarcik: kap === 'patina' ? null : { x: nokta.x, y: agiz } };
+}
+
+// Kısa süren bir efekt animasyonu (iptal edilebilsin diye kaydedilir)
+function efektAnimasyonu(oge, kareler, secenekler) {
+  const animasyon = oge.animate(kareler, secenekler);
+  canliAnimasyonlar.add(animasyon);
+  animasyon.finished.then(() => canliAnimasyonlar.delete(animasyon), () => {});
+  return animasyon;
+}
+
+// Bıçak işlerken çekirdekler ve saplar yemekten fırlar
+function cekirdekFirlat() {
+  const nokta = urunNoktasi(urunYeri);
+  PARCALAR[urunTuru].araliklar.forEach((x, i) => {
+    for (let j = 0; j < 2; j++) {
+      const cekirdek = document.createElementNS(SVG_NS, 'ellipse');
+      cekirdek.setAttribute('cx', (nokta.x + x * nokta.olcek).toFixed(1));
+      cekirdek.setAttribute('cy', (nokta.y - 14).toFixed(1));
+      cekirdek.setAttribute('rx', 3.5);
+      cekirdek.setAttribute('ry', 2);
+      cekirdek.setAttribute('fill', '#3A1E12');
+      $('efekt').appendChild(cekirdek);
+      const yon = (i + j) % 2 ? 1 : -1;
+      efektAnimasyonu(cekirdek,
+        [{ transform: 'translate(0px, 0px)', opacity: 1 },
+         { transform: `translate(${yon * 22}px, -26px)`, opacity: 1, offset: 0.4 },
+         { transform: `translate(${yon * 44}px, 10px)`, opacity: 0 }],
+        { duration: 900, delay: j * 120, easing: 'ease-out', fill: 'forwards' });
+    }
+  });
+}
+
+// Süzgeçten kadehe damlalar düşer
+function damlaDok(bas, sonY, renk) {
+  for (let i = 0; i < 10; i++) {
+    const damla = document.createElementNS(SVG_NS, 'ellipse');
+    damla.setAttribute('cx', (bas.x + (Math.random() - 0.5) * 14).toFixed(1));
+    damla.setAttribute('cy', bas.y);
+    damla.setAttribute('rx', 2);
+    damla.setAttribute('ry', 3.5);
+    damla.setAttribute('fill', renk);
+    damla.setAttribute('opacity', 0);
+    $('efekt').appendChild(damla);
+    efektAnimasyonu(damla,
+      [{ transform: 'translate(0px, 0px)', opacity: 1 }, { transform: `translate(0px, ${sonY - bas.y}px)`, opacity: 0.7 }],
+      { duration: 450, delay: i * 140, easing: 'ease-in' });
+  }
+}
+
+// Tuz, karabiber ya da haşhaş taneleri bir noktanın üstüne düşer
+function taneDok(nokta, renk) {
+  for (let i = 0; i < 16; i++) {
+    const tane = document.createElementNS(SVG_NS, 'circle');
+    tane.setAttribute('cx', (nokta.x + (Math.random() - 0.5) * 70).toFixed(1));
+    tane.setAttribute('cy', (nokta.y - 46).toFixed(1));
+    tane.setAttribute('r', 2);
+    tane.setAttribute('fill', renk);
+    $('efekt').appendChild(tane);
+    efektAnimasyonu(tane,
+      [{ transform: 'translate(0px, 0px)', opacity: 1 }, { transform: `translate(0px, ${(40 + Math.random() * 8).toFixed(0)}px)`, opacity: 0.9 }],
+      { duration: 600, delay: Math.random() * 300, easing: 'ease-in', fill: 'forwards' });
+  }
+}
+
+// Kil kapağı askıya ya da yemeğin üstüne koyar
+function kapagiYerlestir() {
+  const nokta = kapakYeri === 'aski' ? YER.kapakAskisi : YER[kapakYeri];
+  $('arac-testum').style.transform = `translate(${nokta.x}px, ${nokta.y}px)`;
+}
+
+// Sarımsak kabukları tahtadan dökülür
+function kabukDok() {
+  for (let i = 0; i < 8; i++) {
+    const kabuk = document.createElementNS(SVG_NS, 'ellipse');
+    kabuk.setAttribute('cx', (YER.tahta.x + (Math.random() - 0.5) * 30).toFixed(1));
+    kabuk.setAttribute('cy', (YER.tahta.y - 20 - Math.random() * 16).toFixed(1));
+    kabuk.setAttribute('rx', 6);
+    kabuk.setAttribute('ry', 3);
+    kabuk.setAttribute('fill', '#EFE6D2');
+    kabuk.setAttribute('stroke', '#C9B99B');
+    kabuk.style.transformBox = 'fill-box';
+    kabuk.style.transformOrigin = 'center';
+    $('efekt').appendChild(kabuk);
+    const animasyon = kabuk.animate(
+      [
+        { transform: 'translate(0px, 0px) rotate(0deg)', opacity: 1 },
+        { transform: `translate(${((Math.random() - 0.5) * 90).toFixed(0)}px, ${(18 + Math.random() * 20).toFixed(0)}px) rotate(${(Math.random() * 180).toFixed(0)}deg)`, opacity: 0 },
+      ],
+      { duration: 900, easing: 'ease-out', fill: 'forwards' }
+    );
+    canliAnimasyonlar.add(animasyon);
+    animasyon.finished.then(() => canliAnimasyonlar.delete(animasyon), () => {});
+  }
+}
+
+// ===== EKRAN 2: ADIMLARIN EYLEMLERİ =====
+// Her eylem bir adımın canlandırmasıdır. VERI'deki adımlarda "eylem" olarak bu adlar kullanılır.
+const EYLEMLER = {
+
+  // Raftaki (ya da tahtadaki) malzemeyi havana ya da yemeğin altına koyar; istenirse önce kantarda tartar.
+  async ekle(adim, kimlik, t) {
+    let malzeme = kimlik;
+    let ikon = kimlik;
+    let bas;
+    if (kimlik === 'tahta') {
+      malzeme = tahtadaki.malzeme;
+      ikon = tahtadaki.ikon;
+      bas = cizimNoktasi(YER.tahta.x, YER.tahta.y - 26);
+      tahtadaki = null;
+      $('tahta-nesne').innerHTML = '';
+    } else {
+      const dugme = hedefOgesi(kimlik);
+      bas = ogeninOrtasi(dugme.querySelector('svg'));
+      kullanildiIsaretle(kimlik);
+    }
+    let olcek = kimlik === 'tahta' ? 0.62 : 1;
+
+    // Kantar: önce kefeye uçar, miktar görünür, kantar hafifçe sallanır
+    if (adim.tart) {
+      const kefe = cizimNoktasi(YER.kefe.x, YER.kefe.y - 14);
+      const tartilan = await ucur(ikon, bas, kefe, t, { bas: olcek, son: 0.6 });
+      $('tarti-yazisi').textContent = adim.tart;
+      $('tarti-etiketi').style.opacity = 1;
+      const sallanma = $('statera-kol').animate(
+        [{ transform: 'rotate(0deg)' }, { transform: 'rotate(-6deg)' }, { transform: 'rotate(3deg)' }, { transform: 'rotate(0deg)' }],
+        { duration: 1200, easing: 'ease-in-out' }
+      );
+      canliAnimasyonlar.add(sallanma);
+      try {
+        await bekle(1500, t);
+      } finally {
+        canliAnimasyonlar.delete(sallanma);
+        tartilan.remove();
+      }
+      $('tarti-etiketi').style.opacity = 0;
+      bas = kefe;
+      olcek = 0.6;
+    }
+
+    const ucan = await ucur(ikon, bas, eklemeNoktasi(adim.kap), t, { bas: olcek, son: 0.5 });
+    ucan.remove();
+    if (adim.kap === 'havan') havanaEkle(malzeme);
+    else if (adim.kap === 'urun') $('urun-yaprak').style.display = '';   // yemek yaprakların üstüne konur
+    else if (PARCALAR[malzeme]) {                                          // ör. armutlar tencereye, hurmalar ya da et tahtaya
+      urunuKur(malzeme);
+      urunuGoster(adim.kap);
+    } else kabaDoldur(adim.kap, malzeme);                                   // ör. tavaya bal, kaba yağ
+
+    // Sıvı ölçüsü ya da baharat miktarı kabın üstünde görünür
+    const olcu = adim.olcu || (adim.olculer && adim.olculer[kimlik]);
+    if (olcu && KAPLAR[adim.kap]) await olcuGoster(olcu, adim.kap, t);
+    if (adim.icerikRengi) icerikRengiVer(adim.kap, adim.icerikRengi);     // ör. kömürle berraklaşır
+
+    // İstenirse kap ateşteyken içindeki kaynar
+    if (adim.kaynat) {
+      const agiz = kapAgzi(adim.kap);
+      await pismeSureci({ yazi: VERI.mutfak.kaynaniyor, sure: VERI.mutfak.kaynatmaSuresi, ...agiz }, t);
+    }
+  },
+
+  // Malzemeyi tahtada soyar (sarımsak)
+  async soy(adim, kimlik, t) {
+    const dugme = hedefOgesi(kimlik);
+    kullanildiIsaretle(kimlik);
+    const ucan = await ucur(kimlik, ogeninOrtasi(dugme.querySelector('svg')), cizimNoktasi(YER.tahta.x, YER.tahta.y - 26), t, { bas: 1, son: 0.62 });
+    ucan.remove();
+    tahtayaKoy(kimlik, kimlik);
+    await bekle(250, t);
+    kabukDok();
+    await bekle(900, t);
+    $('efekt').innerHTML = '';
+    tahtayaKoy(kimlik, SOYULMUS_IKON[kimlik] || kimlik);
+  },
+
+  // Havanda döver ya da karıştırır
+  async dov(adim, kimlik, t) {
+    await havanDov(adim.karisim, 2200, t);
+  },
+
+  // Havandaki karışımdan tahtada somun ya da top yapar
+  async sekillendir(adim, kimlik, t) {
+    const urun = $('urun');
+    $('havan-icerik').classList.add('bos');
+    urunuKur(adim.parca || tarif.urun);
+    urun.classList.add('gecissiz');
+    urun.style.setProperty('--hamur', havanRengi());
+    urunuYerlestir('tahta', 0.3);
+    urun.getBoundingClientRect();
+    urun.classList.remove('gecissiz');
+    urun.classList.remove('gizli');
+    urunuYerlestir('tahta');
+    await bekle(800, t);
+  },
+
+  // Yemeği başka bir yere taşır (ör. ocağın kenarına)
+  async tasi(adim, kimlik, t) {
+    urunuYerlestir(adim.yer);
+    await bekle(800, t);
+    if (adim.yer === 'havan') {          // havana giren yemek (ör. armutlar) dövülecek malzemeye dönüşür
+      $('urun').classList.add('gizli');
+      havanaEkle(urunTuru);
+    }
+  },
+
+  // Kil kapağı askıdan alıp yemeğin üstüne kapatır
+  async kapak(adim, kimlik, t) {
+    kapakYeri = urunYeri;
+    kapagiYerlestir();
+    $('testum-etiketi').style.opacity = 0;
+    await bekle(900, t);
+  },
+
+  // Ateşten kor alıp kapağın üstüne ve etrafına yığar
+  async kor(adim, kimlik, t) {
+    const kapak = YER[kapakYeri];
+    const yerler = [[-88, -6], [88, -6], [-36, -82], [0, -98], [36, -82], [-62, -40], [62, -40]];
+    const animasyonlar = yerler.map(([dx, dy], i) => {
+      const kor = document.createElementNS(SVG_NS, 'circle');
+      kor.setAttribute('cx', YER.koz.x);
+      kor.setAttribute('cy', YER.koz.y);
+      kor.setAttribute('r', 7);
+      kor.setAttribute('fill', i % 2 ? '#F2A541' : '#D9622B');
+      $('efekt').appendChild(kor);
+      return kor.animate(
+        [{ transform: 'translate(0px, 0px)' }, { transform: `translate(${kapak.x + dx - YER.koz.x}px, ${kapak.y + dy - YER.koz.y}px)` }],
+        { duration: 650, delay: i * 90, easing: 'ease-in-out', fill: 'forwards' }
+      );
+    });
+    for (const animasyon of animasyonlar) await animasyonuBekle(animasyon, t);
+    $('efekt').innerHTML = '';
+    $('arac-testum').classList.add('korlu');
+    await bekle(300, t);
+  },
+
+  // Yemek pişer: buhar çıkar, paneldeki çubuk dolar
+  async pisir(adim, kimlik, t) {
+    // İstenirse önce kap ateşe konur (ör. patina ızgaraya)
+    if (adim.kap && adim.yer) {
+      kabiYerlestir(adim.kap, adim.yer);
+      await bekle(800, t);
+    } else if (adim.yer) {                 // ör. köfteler ızgaraya konur
+      urunuYerlestir(adim.yer);
+      await bekle(800, t);
+    }
+    let yerler;
+    if (adim.kap) yerler = kapAgzi(adim.kap);
+    else if (kapakYeri !== 'aski') {
+      const yer = YER[kapakYeri];
+      yerler = { nokta: { x: yer.x, y: yer.y - 105 }, kabarcik: null };
+    } else {
+      const yer = urunNoktasi(urunYeri);
+      yerler = { nokta: { x: yer.x, y: yer.y - 30 }, kabarcik: null };
+    }
+    if (adim.renk) $('urun').style.setProperty('--hamur', adim.renk);   // ör. somun kızarır
+    if (adim.durum) $('urun').classList.add(adim.durum);                 // ör. armutlar haşlanır
+    if (adim.icerikRengi) icerikRengiVer(adim.kap, adim.icerikRengi);    // ör. patina katılaşır
+    if (adim.kopuk) $('kopuk-' + adim.kap).style.display = '';           // kaynarken köpürür
+    await pismeSureci({ yazi: adim.bekleme || VERI.mutfak.pisiyor, sure: VERI.mutfak.pismeSuresi, ...yerler }, t);
+  },
+
+  // Kapak varsa kaldırılır; yemek servis tepsisine (discus) alınır
+  async servis(adim, kimlik, t) {
+    if (kapakYeri !== 'aski') {
+      kapakYeri = 'aski';
+      kapagiYerlestir();
+      $('arac-testum').classList.remove('korlu');
+      await bekle(900, t);
+      $('testum-etiketi').style.opacity = 1;
+    }
+    if (tarif.servisKabi) kabiYerlestir(tarif.servisKabi, 'discus');   // ör. patina tavasıyla servis edilir
+    else urunuYerlestir('discus');
+    await bekle(900, t);
+  },
+
+  // Bir kabı ocağa koyar (ör. tencereyi közün üstüne)
+  async kapKoy(adim, kimlik, t) {
+    kabiYerlestir(adim.kap, adim.yer);
+    await bekle(800, t);
+    if (adim.kopukAl) $('kopuk-' + adim.kap).style.display = 'none';   // köpüğü alınır
+  },
+
+  // Yemeği ateşteki kaba alır ve kızartır
+  async kizart(adim, kimlik, t) {
+    urunuYerlestir(adim.kap);
+    await bekle(800, t);
+    if (adim.renk) $('urun').style.setProperty('--hamur', adim.renk);
+    await pismeSureci({ yazi: VERI.mutfak.kizariyor, sure: VERI.mutfak.kizartmaSuresi, ...kapAgzi(adim.kap) }, t);
+    if (adim.durum) $('urun').classList.add(adim.durum);
+  },
+
+  // İki çubukla kaptaki yemeği çevirir
+  async cevir(adim, kimlik, t) {
+    const agiz = kapAgzi(adim.kap);
+    const dx = agiz.nokta.x - CUBUK_UCU.x;
+    const dy = agiz.nokta.y + 16 - CUBUK_UCU.y;
+    const hareket = efektAnimasyonu($('arac-cubuklar'), [
+      { transform: 'translate(0px, 0px)' },
+      { transform: `translate(${dx}px, ${dy}px)`, offset: 0.25 },
+      { transform: `translate(${dx - 10}px, ${dy}px)`, offset: 0.38 },
+      { transform: `translate(${dx + 10}px, ${dy}px)`, offset: 0.5 },
+      { transform: `translate(${dx - 10}px, ${dy}px)`, offset: 0.62 },
+      { transform: `translate(${dx}px, ${dy}px)`, offset: 0.75 },
+      { transform: 'translate(0px, 0px)' },
+    ], { duration: 2600, easing: 'ease-in-out' });
+    efektAnimasyonu($('urun-ogeler'), [
+      { transform: 'translate(0px, 0px)' }, { transform: 'translate(0px, -4px)', offset: 0.45 },
+      { transform: 'translate(0px, 0px)', offset: 0.55 }, { transform: 'translate(0px, -4px)', offset: 0.65 },
+      { transform: 'translate(0px, 0px)' },
+    ], { duration: 2600 });
+    if (adim.renk) $('urun').style.setProperty('--hamur', adim.renk);
+    await Promise.all([
+      animasyonuBekle(hareket, t),
+      pismeSureci({ yazi: VERI.mutfak.kizariyor, sure: 2.6, ...agiz }, t),
+    ]);
+  },
+
+  // Bıçakla çekirdek ya da öz çıkarır
+  async kes(adim, kimlik, t) {
+    const nokta = urunNoktasi(urunYeri);
+    const dx = nokta.x - BICAK_UCU.x;
+    const dy = nokta.y - 34 - BICAK_UCU.y;
+    // Bıçak çalışırken her şeyin önünde görünsün; iş bitince duvardaki yerine döner
+    await oneAlarak($('arac-culter'), () => bicakla(dx, dy, adim, t));
+  },
+
+  // Yemeğin içine dolgu koyar (birkaç seçenekten biri)
+  async doldur(adim, kimlik, t) {
+    const dugme = hedefOgesi(kimlik);
+    kullanildiIsaretle(kimlik);
+    const ucan = await ucur(kimlik, ogeninOrtasi(dugme.querySelector('svg')), eklemeNoktasi('urun'), t, { bas: 1, son: 0.5 });
+    ucan.remove();
+    $('urun').style.setProperty('--dolgu', VERI.malzemeler[kimlik].renk);
+    $('urun').classList.add('dolu', 'dolu-' + kimlik);
+    await bekle(300, t);
+  },
+
+  // Tuz, karabiber ya da haşhaş serper (yemeğin ya da patinanın üstüne)
+  async serp(adim, kimlik, t) {
+    const dugme = hedefOgesi(kimlik);
+    kullanildiIsaretle(kimlik);
+    let nokta;
+    if (adim.hedef === 'patina') {
+      const kap = kapNoktasi('patina');
+      nokta = { x: kap.x, y: kap.y + KAPLAR.patina.agiz };
+    } else {
+      const urun = urunNoktasi(urunYeri);
+      nokta = { x: urun.x, y: urun.y - 14 * urun.olcek };
+    }
+    const ucan = await ucur(kimlik, ogeninOrtasi(dugme.querySelector('svg')), cizimNoktasi(nokta.x, nokta.y - 56), t, { bas: 1, son: 0.45 });
+    taneDok(nokta, VERI.malzemeler[kimlik].renk);
+    try {
+      await bekle(900, t);
+    } finally {
+      ucan.remove();
+    }
+    $('efekt').innerHTML = '';
+    if (adim.hedef === 'patina') $('patina-biber').style.display = '';
+    else $('urun').classList.add(adim.durum);
+  },
+
+  // Yemeğin üstüne bal sürer
+  async sur(adim, kimlik, t) {
+    const dugme = hedefOgesi(kimlik);
+    kullanildiIsaretle(kimlik);
+    const ucan = await ucur(kimlik, ogeninOrtasi(dugme.querySelector('svg')), eklemeNoktasi('urun'), t, { bas: 1, son: 0.5 });
+    ucan.remove();
+    $('urun').classList.add(adim.durum);
+    await bekle(300, t);
+  },
+
+  // Havandaki karışımı sığ tavaya (patina) döker
+  async dok(adim, kimlik, t) {
+    kabiYerlestir('patina', 'tahta');
+    await bekle(800, t);
+    const icerik = $('icerik-patina');
+    icerik.classList.add('gecissiz');
+    icerikRengiVer('patina', havanRengi());
+    icerik.getBoundingClientRect();
+    icerik.classList.remove('gecissiz');
+    icerik.style.display = '';
+    $('havan-icerik').classList.add('bos');
+    const dolma = icerik.animate([{ transform: 'scale(0.2)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 700, easing: 'ease-out' });
+    await animasyonuBekle(dolma, t);
+  },
+
+  // Bir gece bekletir: kap ateşteyse kenara alınır, mutfak kısa bir süre kararıp aydınlanır
+  async gece(adim, kimlik, t) {
+    if (adim.kap && kapYerleri[adim.kap] === 'koz') {
+      kabiYerlestir(adim.kap, 'kenar');
+      await bekle(800, t);
+    }
+    const karartma = efektAnimasyonu($('gece'),
+      [{ opacity: 0 }, { opacity: 0.6, offset: 0.3 }, { opacity: 0.6, offset: 0.7 }, { opacity: 0 }],
+      { duration: VERI.mutfak.geceSuresi * 1000 });
+    await Promise.all([
+      animasyonuBekle(karartma, t),
+      pismeSureci({ yazi: VERI.mutfak.gece, sure: VERI.mutfak.geceSuresi, nokta: null }, t),
+    ]);
+  },
+
+  // Tenceredekini süzgeçten (colum) geçirip servis tepsisindeki kadehe süzer
+  async suz(adim, kimlik, t) {
+    const renk = icerikRenkleri.olla || '#7A3A2A';
+    urunuKur(tarif.urun);
+    $('urun').style.setProperty('--kadeh', renk);
+    urunuGoster('discus');
+    const hedef = { x: YER.discus.x, y: YER.discus.y - 66 };   // süzgecin altı kadehin biraz üstünde durur
+    const dx = hedef.x - SUZGEC_ALTI.x;
+    const dy = hedef.y - SUZGEC_ALTI.y;
+    await oneAlarak($('arac-colum'), async () => {
+      const hareket = efektAnimasyonu($('arac-colum'), [
+        { transform: 'translate(0px, 0px)' },
+        { transform: `translate(${dx}px, ${dy}px)`, offset: 0.25 },
+        { transform: `translate(${dx}px, ${dy}px)`, offset: 0.8 },
+        { transform: 'translate(0px, 0px)' },
+      ], { duration: 3400, easing: 'ease-in-out' });
+      await bekle(900, t);
+      damlaDok(hedef, YER.discus.y - 30, renk);
+      await pismeSureci({ yazi: VERI.mutfak.suzuluyor, sure: 1.6, nokta: null }, t);
+      $('urun').classList.add('dolu');
+      await animasyonuBekle(hareket, t);
+      $('efekt').innerHTML = '';
+    });
+  },
+};
+
+// Bıçak tahtaya iner, iki kez keser, çekirdekler fırlar, sonra duvara döner
+async function bicakla(dx, dy, adim, t) {
+  const hareket = efektAnimasyonu($('arac-culter'), [
+    { transform: 'translate(0px, 0px)' },
+    { transform: `translate(${dx}px, ${dy}px)`, offset: 0.3 },
+    { transform: `translate(${dx}px, ${dy + 16}px)`, offset: 0.42 },
+    { transform: `translate(${dx}px, ${dy}px)`, offset: 0.54 },
+    { transform: `translate(${dx}px, ${dy + 16}px)`, offset: 0.66 },
+    { transform: `translate(${dx}px, ${dy}px)`, offset: 0.78 },
+    { transform: 'translate(0px, 0px)' },
+  ], { duration: 2200, easing: 'ease-in-out' });
+  await bekle(1000, t);
+  if (adim.firlat !== false) cekirdekFirlat();   // et doğranırken çekirdek fırlamaz
+  $('urun').classList.add(adim.durum);
+  await animasyonuBekle(hareket, t);
+  $('efekt').innerHTML = '';
+}
+
+// ===== BAŞLAT =====
+document.title = VERI.sayfaBasligi;
+$('sayfa-basligi').innerHTML = VERI.sayfaBasligi;
+$('kisayol-notu').textContent = VERI.kisayolNotu;
+secimEkraniniKur();
+mutfagiHazirla();
+ekranlariCiz();
+olcekle();
+</script>
+</body>
+</html>
